@@ -1,9 +1,16 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:re_use/firebase_options.dart';
+import 'package:re_use/screens/auth/login_screen.dart';
 import 'package:re_use/screens/homepage/homepage.dart';
+import 'package:re_use/services/auth_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,
@@ -40,7 +47,34 @@ class MyApp extends StatelessWidget {
           fontFamily: _globalFontFamily,
         ),
       ),
-      home: const HomePage(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: AuthService().authStateChanges,
+      builder: (context, snapshot) {
+        // still loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // logged in → go to homepage
+        if (snapshot.hasData) {
+          return const HomePage();
+        }
+
+        // not logged in → go to login
+        return const LoginScreen();
+      },
     );
   }
 }
