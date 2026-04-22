@@ -24,7 +24,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static const String _globalFontFamily = '.SF Pro Text';
+  static const String _globalFontFamily = 'Inter';
 
   @override
   Widget build(BuildContext context) {

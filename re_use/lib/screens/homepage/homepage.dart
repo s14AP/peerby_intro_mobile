@@ -6,30 +6,62 @@ import 'package:re_use/types/data_seeding.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  static const Color _pageBackground = Color(0xFFF3FAF7);
+  static const Color _headerTeal = Color(0xFF6F9476);
+  static const Color _textDark = Color(0xFF2F3E36);
+  static const Color _filterFill = Color(0xFFE3EEE9);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       // -- APP BAR ------------------------------------------------------
-      backgroundColor: Colors.white,
+      backgroundColor: _pageBackground,
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: _headerTeal,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 76,
         titleSpacing: 20,
-        title: const Text(
-          're-use',
-          style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w500,
-            color: Color.fromARGB(255, 255, 255, 255),
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            ClipRect(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                widthFactor: 0.84,
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
+                  child: Image.asset(
+                    'assets/login/Logo.png',
+                    height: 40,
+                    width: 40,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 3),
+            Transform.translate(
+              offset: const Offset(0, 0),
+              child: const Text(
+                'e-use',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
-        bottom: const PreferredSize(
+        bottom: PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, thickness: 1, color: Color(0xFFE8E8E8)),
+          child: Divider(height: 1, thickness: 1, color: _filterFill),
         ),
         actions: <Widget>[
           _HeaderActionIcon(assetPath: 'assets/navBar/map.png', onTap: () {}),
@@ -125,8 +157,8 @@ class _FilterPlaceholderButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () {},
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Color(0xFF222222), width: 1),
+          backgroundColor: HomePage._filterFill,
+          side: const BorderSide(color: HomePage._headerTeal, width: 1),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
@@ -137,14 +169,14 @@ class _FilterPlaceholderButton extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF111111),
+                color: HomePage._textDark,
               ),
             ),
             const SizedBox(width: 4),
             const Icon(
               Icons.keyboard_arrow_down,
               size: 20,
-              color: Color(0xFF111111),
+              color: HomePage._textDark,
             ),
           ],
         ),
