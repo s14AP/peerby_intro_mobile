@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
 import 'package:re_use/types/data_seeding.dart';
+import 'package:re_use/screens/detailpage/detailpage.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -15,8 +16,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      // -- APP BAR ------------------------------------------------------
       backgroundColor: _pageBackground,
+      // -- APP BAR ------------------------------------------------------
       appBar: AppBar(
         backgroundColor: _headerTeal,
         surfaceTintColor: Colors.transparent,
@@ -59,7 +60,7 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        bottom: PreferredSize(
+        bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, thickness: 1, color: _filterFill),
         ),
@@ -116,13 +117,32 @@ class HomePage extends StatelessWidget {
                       ? 'Free'
                       : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
 
-                  return ItemCard(
-                    title: item.title,
-                    distance: item.locationCity,
-                    imageUrl: item.imageUrl,
-                    ownerName: item.ownerName,
-                    ownerAvatarUrl: item.ownerAvatarUrl,
-                    price: priceText,
+                  return GestureDetector(
+                    onTap: () {
+                      // Custom Route with NO animation
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  DetailPage(item: item),
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                return child; // Returns the page immediately
+                              },
+                        ),
+                      );
+                    },
+                    child: ItemCard(
+                      title: item.title,
+                      distance: item.locationCity,
+                      imageUrl: item.imageUrl,
+                      ownerName: item.ownerName,
+                      ownerAvatarUrl: item.ownerAvatarUrl,
+                      price: priceText,
+                    ),
                   );
                 },
               ),
@@ -135,8 +155,11 @@ class HomePage extends StatelessWidget {
       bottomNavigationBar: BottomNavBar(
         onHomeTap: () {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const HomePage(),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const HomePage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
             ),
           );
         },
@@ -144,6 +167,8 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+// -- HELPER WIDGETS -----------------------------------------------------------
 
 class _FilterPlaceholderButton extends StatelessWidget {
   const _FilterPlaceholderButton({required this.label});
