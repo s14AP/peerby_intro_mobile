@@ -13,7 +13,7 @@ class HomePage extends StatelessWidget {
       // -- APP BAR ------------------------------------------------------
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.teal,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -24,7 +24,7 @@ class HomePage extends StatelessWidget {
           style: TextStyle(
             fontSize: 34,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF1E1A22),
+            color: Color.fromARGB(255, 255, 255, 255),
           ),
         ),
         bottom: const PreferredSize(
@@ -154,10 +154,15 @@ class _FilterPlaceholderButton extends StatelessWidget {
 }
 
 class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({required this.assetPath, required this.onTap});
+  const _HeaderActionIcon({
+    required this.assetPath,
+    required this.onTap,
+    this.color,
+  });
 
   final String assetPath;
   final VoidCallback onTap;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +177,7 @@ class _HeaderActionIcon extends StatelessWidget {
             assetPath,
             width: 24,
             height: 24,
+            color: Colors.white,
             fit: BoxFit.contain,
           ),
         ),
