@@ -25,18 +25,27 @@ class ItemService {
 
   Future<void> seedItemsIfEmpty() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
-        .limit(1)
         .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      return;
-    }
+    final Set<String> existingIds = snapshot.docs
+        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
+        .toSet();
 
     final WriteBatch batch = _firestore.batch();
+    int writeCount = 0;
     for (final Item item in seededItems) {
+      if (existingIds.contains(item.id)) {
+        continue;
+      }
+
       final DocumentReference<Map<String, dynamic>> docRef = _itemsCollection
           .doc(item.id);
       batch.set(docRef, item.toMap());
+      writeCount++;
+    }
+
+    if (writeCount == 0) {
+      return;
     }
 
     await batch.commit();

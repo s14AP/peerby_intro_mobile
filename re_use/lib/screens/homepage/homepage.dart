@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
 import 'package:re_use/services/item_service.dart';
-import 'package:re_use/types/data_seeding.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
 import 'package:re_use/types/item.dart';
 
