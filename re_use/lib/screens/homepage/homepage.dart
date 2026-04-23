@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
+import 'package:re_use/services/item_service.dart';
 import 'package:re_use/types/data_seeding.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
+import 'package:re_use/types/item.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  static final ItemService _itemService = ItemService();
 
   static const Color _pageBackground = Color(0xFFF3FAF7);
   static const Color _headerTeal = Color(0xFF6F9476);
@@ -101,50 +105,74 @@ class HomePage extends StatelessWidget {
             // -- ITEM GRID ----------------------------------------------
             const SizedBox(height: 12),
             Expanded(
-              child: GridView.builder(
-                itemCount: seededItems.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.69,
-                ),
-                itemBuilder: (BuildContext context, int index) {
-                  final item = seededItems[index];
-                  final bool hasDecimals =
-                      item.price.truncateToDouble() != item.price;
-                  final String priceText = item.price == 0
-                      ? 'Free'
-                      : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+              child: StreamBuilder<List<Item>>(
+                stream: _itemService.watchItems(),
+                builder: (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                  return GestureDetector(
-                    onTap: () {
-                      // Custom Route with NO animation
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  DetailPage(item: item),
-                          transitionDuration: Duration.zero,
-                          reverseTransitionDuration: Duration.zero,
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                                return child; // Returns the page immediately
-                              },
+                  if (snapshot.hasError) {
+                    return const Center(child: Text('Could not load items.'));
+                  }
+
+                  final List<Item> items = snapshot.data ?? <Item>[];
+                  if (items.isEmpty) {
+                    return const Center(child: Text('No items available yet.'));
+                  }
+
+                  return GridView.builder(
+                    itemCount: items.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.69,
+                        ),
+                    itemBuilder: (BuildContext context, int index) {
+                      final Item item = items[index];
+                      final bool hasDecimals =
+                          item.price.truncateToDouble() != item.price;
+                      final String priceText = item.price == 0
+                          ? 'Free'
+                          : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+
+                      return GestureDetector(
+                        onTap: () {
+                          // Custom Route with NO animation
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      DetailPage(item: item),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
+                              transitionsBuilder:
+                                  (
+                                    context,
+                                    animation,
+                                    secondaryAnimation,
+                                    child,
+                                  ) {
+                                    return child; // Returns the page immediately
+                                  },
+                            ),
+                          );
+                        },
+                        child: ItemCard(
+                          title: item.title,
+                          distance: item.locationCity,
+                          imageUrl: item.imageUrl,
+                          ownerName: item.ownerName,
+                          ownerAvatarUrl: item.ownerAvatarUrl,
+                          price: priceText,
                         ),
                       );
                     },
-                    child: ItemCard(
-                      title: item.title,
-                      distance: item.locationCity,
-                      imageUrl: item.imageUrl,
-                      ownerName: item.ownerName,
-                      ownerAvatarUrl: item.ownerAvatarUrl,
-                      price: priceText,
-                    ),
-                  );
-                },
+                  ); // <-- FIXED: Added missing semicolon to close GridView.builder
+                }, // <-- FIXED: Added missing brace to close the StreamBuilder builder
               ),
             ),
           ],
