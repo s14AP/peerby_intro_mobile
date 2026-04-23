@@ -8,7 +8,7 @@ class ItemCard extends StatelessWidget {
   final String imageUrl;
   final String ownerName;
   final String ownerAvatarUrl;
-  final String price; // the ? means optional — some items are free to borrow
+  final String price;
 
   const ItemCard({
     super.key,
@@ -17,7 +17,7 @@ class ItemCard extends StatelessWidget {
     required this.imageUrl,
     required this.ownerName,
     required this.ownerAvatarUrl,
-    required this.price, // no 'required' because it's optional
+    required this.price,
   });
 
   @override
@@ -71,30 +71,28 @@ class ItemCard extends StatelessWidget {
                 ),
               ),
 
-              // price badge (only shows if price is passed in)
-              if (price != null)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xD96F9476),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      price!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xD96F9476),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    price,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
 
