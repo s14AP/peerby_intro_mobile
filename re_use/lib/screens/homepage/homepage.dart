@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
-import 'package:re_use/types/data_seeding.dart';
+import 'package:re_use/screens/createpage/create_listing_screen.dart';
+import 'package:re_use/services/item_service.dart';
+import 'package:re_use/types/item.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  static final ItemService _itemService = ItemService();
 
   @override
   Widget build(BuildContext context) {
@@ -68,31 +72,55 @@ class HomePage extends StatelessWidget {
             // -- ITEM GRID ----------------------------------------------
             const SizedBox(height: 12),
             Expanded(
-              child: GridView.builder(
-                itemCount: seededItems.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.69,
-                ),
-                itemBuilder: (BuildContext context, int index) {
-                  final item = seededItems[index];
-                  final bool hasDecimals =
-                      item.price.truncateToDouble() != item.price;
-                  final String priceText = item.price == 0
-                      ? 'Free'
-                      : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+              child: StreamBuilder<List<Item>>(
+                stream: _itemService.streamItems(),
+                builder:
+                    (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                  return ItemCard(
-                    title: item.title,
-                    distance: item.locationCity,
-                    imageUrl: item.imageUrl,
-                    ownerName: item.ownerName,
-                    ownerAvatarUrl: item.ownerAvatarUrl,
-                    price: priceText,
-                  );
-                },
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Text('Could not load listings right now.'),
+                        );
+                      }
+
+                      final List<Item> items = snapshot.data ?? <Item>[];
+                      if (items.isEmpty) {
+                        return const Center(
+                          child: Text('No listings yet. Tap + to add one.'),
+                        );
+                      }
+
+                      return GridView.builder(
+                        itemCount: items.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.69,
+                            ),
+                        itemBuilder: (BuildContext context, int index) {
+                          final Item item = items[index];
+                          final bool hasDecimals =
+                              item.price.truncateToDouble() != item.price;
+                          final String priceText = item.price == 0
+                              ? 'Free'
+                              : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+
+                          return ItemCard(
+                            title: item.title,
+                            distance: item.locationCity,
+                            imageUrl: item.imageUrl,
+                            ownerName: item.ownerName,
+                            ownerAvatarUrl: item.ownerAvatarUrl,
+                            price: priceText,
+                          );
+                        },
+                      );
+                    },
               ),
             ),
           ],
@@ -105,6 +133,13 @@ class HomePage extends StatelessWidget {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute<void>(
               builder: (BuildContext context) => const HomePage(),
+            ),
+          );
+        },
+        onAddTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const CreateListingScreen(),
             ),
           );
         },

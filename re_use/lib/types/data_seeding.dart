@@ -11,8 +11,9 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Mila Verhoeven',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-mila/100/100',
     category: 'Tools',
-    typePayment: TypePayment.day,
+    typePayment: TypePayment.dag,
     price: 8.0,
+    ownerId: 'user1',
   ),
   Item(
     id: '2',
@@ -26,6 +27,7 @@ const List<Item> seededItems = <Item>[
     category: 'Outdoor',
     typePayment: TypePayment.week,
     price: 22.5,
+    ownerId: 'user2',
   ),
   Item(
     id: '3',
@@ -36,8 +38,9 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Noa Smit',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-noa/100/100',
     category: 'Kitchen',
-    typePayment: TypePayment.hour,
+    typePayment: TypePayment.uur,
     price: 3.0,
+    ownerId: 'user3',
   ),
   Item(
     id: '4',
@@ -49,8 +52,9 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Jesse van Dijk',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-jesse/100/100',
     category: 'Sports',
-    typePayment: TypePayment.day,
+    typePayment: TypePayment.dag,
     price: 15.0,
+    ownerId: 'user4',
   ),
   Item(
     id: '5',
@@ -62,8 +66,9 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Sophie Kramer',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-sophie/100/100',
     category: 'Electronics',
-    typePayment: TypePayment.day,
+    typePayment: TypePayment.dag,
     price: 12.0,
+    ownerId: 'user5',
   ),
   Item(
     id: '6',
@@ -75,8 +80,9 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Tom Bakker',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-tom/100/100',
     category: 'Garden',
-    typePayment: TypePayment.day,
+    typePayment: TypePayment.dag,
     price: 10.0,
+    ownerId: 'user6',
   ),
   Item(
     id: '7',
@@ -90,6 +96,7 @@ const List<Item> seededItems = <Item>[
     category: 'Tech',
     typePayment: TypePayment.week,
     price: 35.0,
+    ownerId: 'user7',
   ),
   Item(
     id: '8',
@@ -101,7 +108,8 @@ const List<Item> seededItems = <Item>[
     ownerName: 'Eva Jansen',
     ownerAvatarUrl: 'https://picsum.photos/seed/avatar-eva/100/100',
     category: 'Crafts',
-    typePayment: TypePayment.day,
+    typePayment: TypePayment.dag,
     price: 9.5,
+    ownerId: 'user8',
   ),
 ];
