@@ -84,4 +84,42 @@ class Item {
       createdAt: createdAt,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'title': title,
+      'description': description,
+      'locationCity': locationCity,
+      'locationCountry': locationCountry,
+      'imageUrl': imageUrl,
+      'ownerName': ownerName,
+      'ownerAvatarUrl': ownerAvatarUrl,
+      'category': category,
+      'typePayment': typePayment.name,
+      'price': price,
+    };
+  }
+
+  static Item fromMap(Map<String, dynamic> map, {required String id}) {
+    return Item(
+      id: id,
+      title: map['title'] as String? ?? '',
+      description: map['description'] as String?,
+      locationCity: map['locationCity'] as String? ?? '',
+      locationCountry: map['locationCountry'] as String? ?? '',
+      imageUrl: map['imageUrl'] as String? ?? '',
+      ownerName: map['ownerName'] as String? ?? '',
+      ownerAvatarUrl: map['ownerAvatarUrl'] as String? ?? '',
+      category: map['category'] as String? ?? '',
+      typePayment: _typePaymentFromString(map['typePayment'] as String?),
+      price: (map['price'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  static TypePayment _typePaymentFromString(String? value) {
+    return TypePayment.values.firstWhere(
+      (TypePayment type) => type.name == value,
+      orElse: () => TypePayment.day,
+    );
+  }
 }

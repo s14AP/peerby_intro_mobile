@@ -6,10 +6,12 @@ import 'package:re_use/firebase_options.dart';
 import 'package:re_use/screens/auth/login_screen.dart';
 import 'package:re_use/screens/homepage/homepage.dart';
 import 'package:re_use/services/auth_service.dart';
+import 'package:re_use/services/item_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await ItemService().seedItemsIfEmpty();
 
   runApp(
     DevicePreview(
@@ -24,7 +26,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static const String _globalFontFamily = '.SF Pro Text';
+  static const String _globalFontFamily = 'Inter';
 
   @override
   Widget build(BuildContext context) {

@@ -8,7 +8,7 @@ class ItemCard extends StatelessWidget {
   final String imageUrl;
   final String ownerName;
   final String ownerAvatarUrl;
-  final String price; // the ? means optional — some items are free to borrow
+  final String price;
 
   const ItemCard({
     super.key,
@@ -17,18 +17,18 @@ class ItemCard extends StatelessWidget {
     required this.imageUrl,
     required this.ownerName,
     required this.ownerAvatarUrl,
-    required this.price, // no 'required' because it's optional
+    required this.price,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFBFEFD),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: const Color(0xFF6F9476).withValues(alpha: 0.14),
             spreadRadius: 0,
             blurRadius: 8,
             offset: const Offset(0, 2), // changes position of shadow
@@ -46,10 +46,7 @@ class ItemCard extends StatelessWidget {
               Container(
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(
-                      color: Color.fromARGB(255, 219, 219, 219),
-                      width: 1,
-                    ),
+                    bottom: BorderSide(color: Color(0xFFD7E6DE), width: 1),
                   ),
                 ),
                 child: SizedBox(
@@ -74,30 +71,28 @@ class ItemCard extends StatelessWidget {
                 ),
               ),
 
-              // price badge (only shows if price is passed in)
-              if (price != null)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xD9000000),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      price!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xD96F9476),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    price,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
 
@@ -146,7 +141,7 @@ class ItemCard extends StatelessWidget {
                         softWrap: false,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF8A8A8A),
+                          color: Color(0xFF5F6F67),
                         ),
                       ),
                     ),
@@ -161,7 +156,7 @@ class ItemCard extends StatelessWidget {
                     const Icon(
                       Icons.location_on_outlined,
                       size: 12,
-                      color: Color(0xFF8A8A8A),
+                      color: Color(0xFF5F6F67),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -172,7 +167,7 @@ class ItemCard extends StatelessWidget {
                         softWrap: false,
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF8A8A8A),
+                          color: Color(0xFF5F6F67),
                         ),
                       ),
                     ),

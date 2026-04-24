@@ -24,12 +24,12 @@ class BottomNavBar extends StatelessWidget {
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF8FCFA),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0x12000000)),
+            border: Border.all(color: const Color(0x336F9476)),
             boxShadow: const <BoxShadow>[
               BoxShadow(
-                color: Color(0x1A000000),
+                color: Color(0x166F9476),
                 blurRadius: 10,
                 offset: Offset(0, 4),
               ),
@@ -81,6 +81,7 @@ class _NavIcon extends StatelessWidget {
             assetPath,
             width: 24,
             height: 24,
+            color: const Color(0xFF2F3E36),
             fit: BoxFit.contain,
           ),
         ),
