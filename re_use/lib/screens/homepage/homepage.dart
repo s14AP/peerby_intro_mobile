@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
-import 'package:re_use/services/item_service.dart';
 import 'package:re_use/screens/createpage/create_listing_screen.dart';
+import 'package:re_use/services/item_service.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
 import 'package:re_use/types/item.dart';
 
@@ -15,7 +15,6 @@ class HomePage extends StatelessWidget {
   static const Color _headerTeal = Color(0xFF6F9476);
   static const Color _textDark = Color(0xFF2F3E36);
   static const Color _filterFill = Color(0xFFE3EEE9);
-
 
   @override
   Widget build(BuildContext context) {
@@ -108,38 +107,6 @@ class HomePage extends StatelessWidget {
             Expanded(
               child: StreamBuilder<List<Item>>(
                 stream: _itemService.watchItems(),
-                builder: (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    return const Center(child: Text('Could not load items.'));
-                  }
-
-                  final List<Item> items = snapshot.data ?? <Item>[];
-                  if (items.isEmpty) {
-                    return const Center(child: Text('No items available yet.'));
-                  }
-
-                  return GridView.builder(
-                    itemCount: items.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.69,
-                        ),
-                    itemBuilder: (BuildContext context, int index) {
-                      final Item item = items[index];
-                      final bool hasDecimals =
-                          item.price.truncateToDouble() != item.price;
-                      final String priceText = item.price == 0
-                          ? 'Free'
-                          : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
-              child: StreamBuilder<List<Item>>(
-                stream: _itemService.streamItems(),
                 builder:
                     (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -176,43 +143,43 @@ class HomePage extends StatelessWidget {
                               ? 'Free'
                               : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
 
-                              return GestureDetector(
-                        onTap: () {
-                          // Custom Route with NO animation
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      DetailPage(item: item),
-                              transitionDuration: Duration.zero,
-                              reverseTransitionDuration: Duration.zero,
-                              transitionsBuilder:
-                                  (
-                                    context,
-                                    animation,
-                                    secondaryAnimation,
-                                    child,
-                                  ) {
-                                    return child; // Returns the page immediately
-                                  },
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder:
+                                      (
+                                        BuildContext context,
+                                        Animation<double> animation,
+                                        Animation<double> secondaryAnimation,
+                                      ) => DetailPage(item: item),
+                                  transitionDuration: Duration.zero,
+                                  reverseTransitionDuration: Duration.zero,
+                                  transitionsBuilder:
+                                      (
+                                        BuildContext context,
+                                        Animation<double> animation,
+                                        Animation<double> secondaryAnimation,
+                                        Widget child,
+                                      ) {
+                                        return child;
+                                      },
+                                ),
+                              );
+                            },
+                            child: ItemCard(
+                              title: item.title,
+                              distance: item.locationCity,
+                              imageUrl: item.imageUrl,
+                              ownerName: item.ownerName,
+                              ownerAvatarUrl: item.ownerAvatarUrl,
+                              price: priceText,
                             ),
                           );
                         },
-                        child: ItemCard(
-                                  title: item.title,
-                                  distance: item.locationCity,
-                                  imageUrl: item.imageUrl,
-                                  ownerName: item.ownerName,
-                                  ownerAvatarUrl: item.ownerAvatarUrl,
-                                  price: priceText,
-                        ),
-                              );
-                        },
                       );
-                        },
-                  ); // <-- FIXED: Added missing semicolon to close GridView.builder
-                }, // <-- FIXED: Added missing brace to close the StreamBuilder builder
+                    },
               ),
             ),
           ],
@@ -225,6 +192,13 @@ class HomePage extends StatelessWidget {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute<void>(
               builder: (BuildContext context) => const HomePage(),
+            ),
+          );
+        },
+        onAddTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const CreateListingScreen(),
             ),
           );
         },
@@ -276,15 +250,10 @@ class _FilterPlaceholderButton extends StatelessWidget {
 }
 
 class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({
-    required this.assetPath,
-    required this.onTap,
-    this.color,
-  });
+  const _HeaderActionIcon({required this.assetPath, required this.onTap});
 
   final String assetPath;
   final VoidCallback onTap;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {

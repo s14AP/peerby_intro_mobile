@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:re_use/components/bottomNavBar.dart';
+import 'package:re_use/screens/createpage/create_listing_screen.dart';
 import 'package:re_use/screens/homepage/homepage.dart';
 import 'package:re_use/types/item.dart';
 
@@ -479,6 +480,13 @@ class _DetailPageState extends State<DetailPage> {
                   const HomePage(),
               transitionDuration: Duration.zero,
               reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        },
+        onAddTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const CreateListingScreen(),
             ),
           );
         },
