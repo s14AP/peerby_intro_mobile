@@ -197,7 +197,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<TypePayment>(
-                value: _selectedTypePayment,
+                initialValue: _selectedTypePayment,
                 decoration: const InputDecoration(labelText: 'Rate Type'),
                 items: TypePayment.values.map((TypePayment type) {
                   return DropdownMenuItem<TypePayment>(
