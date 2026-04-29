@@ -78,13 +78,11 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: <Widget>[
           _HeaderActionIcon(
-            // Verander het icoontje visueel indien gewenst als map actief is
-            assetPath: _showMap
-                ? 'assets/navBar/list.png'
-                : 'assets/navBar/map.png',
+            assetPath: _showMap ? null : 'assets/navBar/map.png',
+            iconOverride: _showMap ? Icons.view_list : null,
             onTap: () {
               setState(() {
-                _showMap = !_showMap; //
+                _showMap = !_showMap;
               });
             },
           ),
@@ -279,9 +277,10 @@ class _FilterPlaceholderButton extends StatelessWidget {
 }
 
 class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({required this.assetPath, required this.onTap});
+  const _HeaderActionIcon({this.assetPath, this.iconOverride, required this.onTap});
 
-  final String assetPath;
+  final String? assetPath;
+  final IconData? iconOverride;
   final VoidCallback onTap;
 
   @override
@@ -293,18 +292,17 @@ class _HeaderActionIcon extends StatelessWidget {
         width: 36,
         height: 36,
         child: Center(
-          // TODO: Weghalen
-          // Failsafe ingebouwd: als je 'assets/navBar/list.png' nog niet hebt,
-          // zal het een error tonen. Voeg dat icoontje even toe aan je assets!
-          child: Image.asset(
-            assetPath,
-            width: 24,
-            height: 24,
-            color: Colors.white,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.map, color: Colors.white),
-          ),
+          child: iconOverride != null
+              ? Icon(iconOverride, color: Colors.white, size: 24)
+              : Image.asset(
+                  assetPath!,
+                  width: 24,
+                  height: 24,
+                  color: Colors.white,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.map, color: Colors.white),
+                ),
         ),
       ),
     );
