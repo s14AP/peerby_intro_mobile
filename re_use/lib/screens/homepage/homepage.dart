@@ -62,16 +62,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  double _haversineKm(
-    double lat1,
-    double lon1,
-    double lat2,
-    double lon2,
-  ) {
+  double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371;
     final double dLat = (lat2 - lat1) * pi / 180;
     final double dLon = (lon2 - lon1) * pi / 180;
-    final double a = sin(dLat / 2) * sin(dLat / 2) +
+    final double a =
+        sin(dLat / 2) * sin(dLat / 2) +
         cos(lat1 * pi / 180) *
             cos(lat2 * pi / 180) *
             sin(dLon / 2) *
@@ -124,7 +120,9 @@ class _HomePageState extends State<HomePage> {
     if (_userPosition == null) {
       ScaffoldMessenger.of(ctx).showSnackBar(
         const SnackBar(
-          content: Text('Locatie niet beschikbaar. Controleer je instellingen.'),
+          content: Text(
+            'Locatie niet beschikbaar. Controleer je instellingen.',
+          ),
         ),
       );
       return;
@@ -176,8 +174,9 @@ class _HomePageState extends State<HomePage> {
 
   void _showTypeFilter(BuildContext ctx) {
     final List<String> labels = TypePayment.values.map(_typeLabel).toList();
-    final String? selectedLabel =
-        _filterTypePayment != null ? _typeLabel(_filterTypePayment!) : null;
+    final String? selectedLabel = _filterTypePayment != null
+        ? _typeLabel(_filterTypePayment!)
+        : null;
 
     showModalBottomSheet<void>(
       context: ctx,
@@ -250,8 +249,9 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: <Widget>[
           _HeaderActionIcon(
-            assetPath:
-                _showMap ? 'assets/navBar/list.png' : 'assets/navBar/map.png',
+            assetPath: _showMap
+                ? 'assets/navBar/list.png'
+                : 'assets/navBar/map.png',
             onTap: () => setState(() => _showMap = !_showMap),
           ),
           Padding(
@@ -269,8 +269,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
         child: StreamBuilder<List<Item>>(
           stream: _itemService.watchItems(),
-          builder:
-              (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
+          builder: (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -316,8 +315,7 @@ class _HomePageState extends State<HomePage> {
                         _FilterButton(
                           label: _filterCategory ?? 'Categorie',
                           active: _filterCategory != null,
-                          onTap: () =>
-                              _showCategoryFilter(context, categories),
+                          onTap: () => _showCategoryFilter(context, categories),
                         ),
                         const SizedBox(width: 8),
                         _FilterButton(
@@ -346,71 +344,66 @@ class _HomePageState extends State<HomePage> {
                   child: filteredItems.isEmpty
                       ? const Center(child: Text('Geen items gevonden.'))
                       : _showMap
-                          ? Padding(
-                              padding: EdgeInsets.only(
-                                bottom: MediaQuery.of(context).padding.bottom + 78,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: ItemMapView(items: filteredItems),
-                              ),
-                            )
-                          : GridView.builder(
-                              itemCount: filteredItems.length,
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                      ? Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom + 78,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ItemMapView(items: filteredItems),
+                          ),
+                        )
+                      : GridView.builder(
+                          itemCount: filteredItems.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 12,
                                 mainAxisSpacing: 12,
                                 childAspectRatio: 0.69,
                               ),
-                              itemBuilder:
-                                  (BuildContext context, int index) {
-                                final Item item = filteredItems[index];
-                                final bool hasDecimals =
-                                    item.price.truncateToDouble() !=
-                                        item.price;
-                                final String priceText = item.price == 0
-                                    ? 'Free'
-                                    : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+                          itemBuilder: (BuildContext context, int index) {
+                            final Item item = filteredItems[index];
+                            final bool hasDecimals =
+                                item.price.truncateToDouble() != item.price;
+                            final String priceText = item.price == 0
+                                ? 'Free'
+                                : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      PageRouteBuilder(
-                                        pageBuilder: (
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    pageBuilder:
+                                        (
                                           BuildContext context,
                                           Animation<double> animation,
-                                          Animation<double>
-                                              secondaryAnimation,
-                                        ) =>
-                                            DetailPage(item: item),
-                                        transitionDuration: Duration.zero,
-                                        reverseTransitionDuration:
-                                            Duration.zero,
-                                        transitionsBuilder: (
+                                          Animation<double> secondaryAnimation,
+                                        ) => DetailPage(item: item),
+                                    transitionDuration: Duration.zero,
+                                    reverseTransitionDuration: Duration.zero,
+                                    transitionsBuilder:
+                                        (
                                           BuildContext context,
                                           Animation<double> animation,
-                                          Animation<double>
-                                              secondaryAnimation,
+                                          Animation<double> secondaryAnimation,
                                           Widget child,
-                                        ) =>
-                                            child,
-                                      ),
-                                    );
-                                  },
-                                  child: ItemCard(
-                                    title: item.title,
-                                    distance: item.locationCity,
-                                    imageUrl: item.imageUrl,
-                                    ownerName: item.ownerName,
-                                    ownerAvatarUrl: item.ownerAvatarUrl,
-                                    price: priceText,
+                                        ) => child,
                                   ),
                                 );
                               },
-                            ),
+                              child: ItemCard(
+                                title: item.title,
+                                distance: item.locationCity,
+                                imageUrl: item.imageUrl,
+                                ownerName: item.ownerName,
+                                ownerAvatarUrl: item.ownerAvatarUrl,
+                                price: priceText,
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             );
@@ -470,9 +463,7 @@ class _FilterButton extends StatelessWidget {
             color: disabled ? Colors.grey.shade400 : _teal,
             width: 1,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           disabledBackgroundColor: Colors.grey.shade200,
         ),
@@ -487,8 +478,8 @@ class _FilterButton extends StatelessWidget {
                 color: disabled
                     ? Colors.grey.shade500
                     : active
-                        ? Colors.white
-                        : _dark,
+                    ? Colors.white
+                    : _dark,
               ),
             ),
             const SizedBox(width: 2),
@@ -498,8 +489,8 @@ class _FilterButton extends StatelessWidget {
               color: disabled
                   ? Colors.grey.shade500
                   : active
-                      ? Colors.white
-                      : _dark,
+                  ? Colors.white
+                  : _dark,
             ),
           ],
         ),
@@ -637,9 +628,7 @@ class _Chip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? _teal : const Color(0xFFE3EEE9),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? _teal : const Color(0xFFB5CFC0),
-          ),
+          border: Border.all(color: isActive ? _teal : const Color(0xFFB5CFC0)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -789,9 +778,7 @@ class _DistanceSheetState extends State<_DistanceSheet> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      widget.onSelect(
-                        _value < _maxKm ? _value : null,
-                      );
+                      widget.onSelect(_value < _maxKm ? _value : null);
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
@@ -851,8 +838,9 @@ class _SliderSheetState extends State<_SliderSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final int divisions =
-        widget.maxAvailable > 0 ? widget.maxAvailable.clamp(10, 100).toInt() : 10;
+    final int divisions = widget.maxAvailable > 0
+        ? widget.maxAvailable.clamp(10, 100).toInt()
+        : 10;
 
     return SafeArea(
       child: Padding(
@@ -863,10 +851,7 @@ class _SliderSheetState extends State<_SliderSheet> {
           children: <Widget>[
             Text(
               widget.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
             Row(
@@ -940,9 +925,14 @@ class _SliderSheetState extends State<_SliderSheet> {
 // -- HEADER ACTION ICON -------------------------------------------------------
 
 class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({required this.assetPath, required this.onTap});
+  const _HeaderActionIcon({
+    this.assetPath,
+    this.iconOverride,
+    required this.onTap,
+  });
 
-  final String assetPath;
+  final String? assetPath;
+  final IconData? iconOverride;
   final VoidCallback onTap;
 
   @override
@@ -960,9 +950,9 @@ class _HeaderActionIcon extends StatelessWidget {
             height: 24,
             color: Colors.white,
             fit: BoxFit.contain,
-            errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) =>
-                const Icon(Icons.map, color: Colors.white),
+            errorBuilder:
+                (BuildContext context, Object error, StackTrace? stackTrace) =>
+                    const Icon(Icons.map, color: Colors.white),
           ),
         ),
       ),
