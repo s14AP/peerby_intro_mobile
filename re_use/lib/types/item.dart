@@ -22,6 +22,8 @@ class Item {
     required this.category,
     required this.typePayment,
     required this.price,
+    this.latitude,
+    this.longitude,
     this.ownerId = '',
     this.createdAt,
   });
@@ -38,6 +40,8 @@ class Item {
   final TypePayment typePayment;
   final double price;
   final String ownerId;
+  final double? latitude;
+  final double? longitude;
   final DateTime? createdAt;
 
   Map<String, dynamic> toMap() {
@@ -52,6 +56,8 @@ class Item {
       'category': category,
       'typePayment': typePayment.name,
       'price': price,
+      'latitude': latitude,
+      'longitude': longitude,
       'ownerId': ownerId,
       // Keep server ordering consistent across devices.
       'createdAt': createdAt == null
@@ -81,6 +87,8 @@ class Item {
       ),
       price: ((map['price'] ?? 0) as num).toDouble(),
       ownerId: (map['ownerId'] ?? '') as String,
+      latitude: map['latitude'] as double?,
+      longitude: map['longitude'] as double?,
       createdAt: createdAt,
     );
   }

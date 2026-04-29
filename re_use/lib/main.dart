@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
     final ThemeData darkTheme = ThemeData.dark();
 
     return MaterialApp(
+      // ignore: deprecated_member_use
       useInheritedMediaQuery: true,
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
