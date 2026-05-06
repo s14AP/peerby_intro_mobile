@@ -184,8 +184,11 @@ class ProfilePage extends StatelessWidget {
       bottomNavigationBar: BottomNavBar(
         onHomeTap: () {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const HomePage(),
+            PageRouteBuilder<void>(
+              pageBuilder: (ctx, anim, secAnim) => const HomePage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              transitionsBuilder: (ctx, anim, secAnim, child) => child,
             ),
           );
         },

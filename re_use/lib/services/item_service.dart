@@ -43,6 +43,8 @@ class ItemService {
       typePayment: item.typePayment,
       price: item.price,
       ownerId: item.ownerId,
+      latitude: item.latitude,
+      longitude: item.longitude,
       createdAt: item.createdAt,
     );
 
@@ -53,21 +55,36 @@ class ItemService {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
         .get();
 
-    final Set<String> existingIds = snapshot.docs
-        .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.id)
-        .toSet();
+    final Map<String, Map<String, dynamic>> existingDocs = {
+      for (final doc in snapshot.docs) doc.id: doc.data(),
+    };
 
     final WriteBatch batch = _firestore.batch();
     int writeCount = 0;
     for (final Item item in seededItems) {
-      if (existingIds.contains(item.id)) {
-        continue;
-      }
-
       final DocumentReference<Map<String, dynamic>> docRef = _itemsCollection
           .doc(item.id);
-      batch.set(docRef, item.toMap());
-      writeCount++;
+
+      if (!existingDocs.containsKey(item.id)) {
+        batch.set(docRef, item.toMap());
+        writeCount++;
+      } else {
+        final Map<String, dynamic> existing = existingDocs[item.id]!;
+        final bool needsPatch =
+            existing['latitude'] != item.latitude ||
+            existing['longitude'] != item.longitude ||
+            existing['locationCity'] != item.locationCity ||
+            existing['locationCountry'] != item.locationCountry;
+        if (needsPatch) {
+          batch.update(docRef, <String, dynamic>{
+            'latitude': item.latitude,
+            'longitude': item.longitude,
+            'locationCity': item.locationCity,
+            'locationCountry': item.locationCountry,
+          });
+          writeCount++;
+        }
+      }
     }
 
     if (writeCount == 0) {

@@ -79,16 +79,14 @@ class _HomePageState extends State<HomePage> {
   List<Item> _applyFilters(List<Item> items) {
     return items.where((Item item) {
       if (_filterMaxDistance != null && _userPosition != null) {
-        if (item.latitude != null && item.longitude != null) {
-          final double km = _haversineKm(
-            _userPosition!.latitude,
-            _userPosition!.longitude,
-            item.latitude!,
-            item.longitude!,
-          );
-          if (km > _filterMaxDistance!) return false;
-        }
-        // Items without coordinates are always shown
+        if (item.latitude == null || item.longitude == null) return false;
+        final double km = _haversineKm(
+          _userPosition!.latitude,
+          _userPosition!.longitude,
+          item.latitude!,
+          item.longitude!,
+        );
+        if (km > _filterMaxDistance!) return false;
       }
       if (_filterCategory != null && item.category != _filterCategory) {
         return false;
@@ -297,57 +295,60 @@ class _HomePageState extends State<HomePage> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                // -- FILTER ROW -------------------------------------------
-                SizedBox(
-                  height: 36,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: <Widget>[
-                        _FilterButton(
-                          label: _filterMaxDistance != null
-                              ? '≤ ${_filterMaxDistance!.toStringAsFixed(0)} km'
-                              : 'Afstand',
-                          active: _filterMaxDistance != null,
-                          disabled: _userPosition == null,
-                          onTap: () => _showDistanceFilter(context),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterButton(
-                          label: _filterCategory ?? 'Categorie',
-                          active: _filterCategory != null,
-                          onTap: () => _showCategoryFilter(context, categories),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterButton(
-                          label: _filterMaxPrice != null
-                              ? '≤ €${_filterMaxPrice!.toStringAsFixed(0)}'
-                              : 'Prijs',
-                          active: _filterMaxPrice != null,
-                          onTap: () => _showPriceFilter(context, maxPrice),
-                        ),
-                        const SizedBox(width: 8),
-                        _FilterButton(
-                          label: _filterTypePayment != null
-                              ? _typeLabel(_filterTypePayment!)
-                              : 'Type',
-                          active: _filterTypePayment != null,
-                          onTap: () => _showTypeFilter(context),
-                        ),
-                      ],
+                // -- FILTER ROW (hidden in map mode) ----------------------
+                if (!_showMap) ...<Widget>[
+                  SizedBox(
+                    height: 36,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: <Widget>[
+                          _FilterButton(
+                            label: _filterMaxDistance != null
+                                ? '≤ ${_filterMaxDistance!.toStringAsFixed(0)} km'
+                                : 'Afstand',
+                            active: _filterMaxDistance != null,
+                            disabled: _userPosition == null,
+                            onTap: () => _showDistanceFilter(context),
+                          ),
+                          const SizedBox(width: 8),
+                          _FilterButton(
+                            label: _filterCategory ?? 'Categorie',
+                            active: _filterCategory != null,
+                            onTap: () =>
+                                _showCategoryFilter(context, categories),
+                          ),
+                          const SizedBox(width: 8),
+                          _FilterButton(
+                            label: _filterMaxPrice != null
+                                ? '≤ €${_filterMaxPrice!.toStringAsFixed(0)}'
+                                : 'Prijs',
+                            active: _filterMaxPrice != null,
+                            onTap: () => _showPriceFilter(context, maxPrice),
+                          ),
+                          const SizedBox(width: 8),
+                          _FilterButton(
+                            label: _filterTypePayment != null
+                                ? _typeLabel(_filterTypePayment!)
+                                : 'Type',
+                            active: _filterTypePayment != null,
+                            onTap: () => _showTypeFilter(context),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                ],
 
                 // -- ITEM GRID OR MAP -------------------------------------
-                const SizedBox(height: 12),
                 Expanded(
                   child: filteredItems.isEmpty
                       ? const Center(child: Text('Geen items gevonden.'))
                       : _showMap
                       ? Padding(
                           padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom + 78,
+                            bottom: MediaQuery.of(context).padding.bottom,
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
@@ -416,8 +417,11 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavBar(
         onHomeTap: () {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const HomePage(),
+            PageRouteBuilder<void>(
+              pageBuilder: (ctx, anim, secAnim) => const HomePage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              transitionsBuilder: (ctx, anim, secAnim, child) => child,
             ),
           );
         },
@@ -430,8 +434,11 @@ class _HomePageState extends State<HomePage> {
         },
         onProfileTap: () {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const ProfilePage(),
+            PageRouteBuilder<void>(
+              pageBuilder: (ctx, anim, secAnim) => const ProfilePage(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              transitionsBuilder: (ctx, anim, secAnim, child) => child,
             ),
           );
         },
@@ -718,7 +725,7 @@ class _DistanceSheet extends StatefulWidget {
 }
 
 class _DistanceSheetState extends State<_DistanceSheet> {
-  static const double _maxKm = 50;
+  static const double _maxKm = 250;
   late double _value;
 
   @override
@@ -753,14 +760,14 @@ class _DistanceSheetState extends State<_DistanceSheet> {
                     color: Color(0xFF6F9476),
                   ),
                 ),
-                const Text('50 km'),
+                const Text('250 km'),
               ],
             ),
             Slider(
               value: _value,
               min: 1,
               max: _maxKm,
-              divisions: 49,
+              divisions: 249,
               activeColor: const Color(0xFF6F9476),
               onChanged: (double v) => setState(() => _value = v),
             ),

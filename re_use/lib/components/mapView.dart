@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:re_use/types/item.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
@@ -13,22 +14,65 @@ class ItemMapView extends StatefulWidget {
 }
 
 class _ItemMapViewState extends State<ItemMapView> {
-  GoogleMapController? mapController;
+  GoogleMapController? _mapController;
+  LatLng? _userLocation;
 
-  // Standaard startpositie (bijv. Brussel)
-  final LatLng _center = const LatLng(50.8503, 4.3517);
+  // Belgium center as fallback
+  static const LatLng _fallbackCenter = LatLng(50.85, 4.35);
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserLocation();
+  }
+
+  Future<void> _fetchUserLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+      final Position pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      if (!mounted) return;
+      _userLocation = LatLng(pos.latitude, pos.longitude);
+      _animateToUser();
+    } catch (_) {
+      // Location unavailable — stay on fallback center
+    }
+  }
+
+  void _animateToUser() {
+    final LatLng? loc = _userLocation;
+    if (loc == null || _mapController == null) return;
+    _mapController!.animateCamera(
+      CameraUpdate.newLatLngZoom(loc, 12.0),
+    );
+  }
 
   void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+    _mapController = controller;
+    _animateToUser();
+  }
+
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Zet de items om naar Markers.
-    // We filteren items eruit die geen latitude of longitude hebben.
     final Set<Marker> markers = widget.items
-        .where((item) => item.latitude != null && item.longitude != null)
-        .map((item) {
+        .where((Item item) => item.latitude != null && item.longitude != null)
+        .map((Item item) {
           final bool hasDecimals = item.price.truncateToDouble() != item.price;
           final String priceText = item.price == 0
               ? 'Gratis'
@@ -41,11 +85,13 @@ class _ItemMapViewState extends State<ItemMapView> {
               title: item.title,
               snippet: priceText,
               onTap: () {
-                // Ga naar detailpagina als je op de info-window van een marker klikt
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailPage(item: item),
+                  PageRouteBuilder<void>(
+                    pageBuilder: (ctx, anim, secAnim) => DetailPage(item: item),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                    transitionsBuilder: (ctx, anim, secAnim, child) => child,
                   ),
                 );
               },
@@ -56,7 +102,10 @@ class _ItemMapViewState extends State<ItemMapView> {
 
     return GoogleMap(
       onMapCreated: _onMapCreated,
-      initialCameraPosition: CameraPosition(target: _center, zoom: 11.0),
+      initialCameraPosition: const CameraPosition(
+        target: _fallbackCenter,
+        zoom: 7.5,
+      ),
       markers: markers,
       myLocationEnabled: true,
       myLocationButtonEnabled: true,
