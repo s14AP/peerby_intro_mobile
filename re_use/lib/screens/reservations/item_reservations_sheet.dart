@@ -10,8 +10,14 @@ class ItemReservationsSheet extends StatelessWidget {
   static const Color _dark = Color(0xFF2F3E36);
   static const Color _muted = Color(0xFF6D7D74);
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _fmt(DateTime d, String typePayment) {
+    final String date =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    if (typePayment == 'uur') {
+      return '$date  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    }
+    return date;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +108,11 @@ class ItemReservationsSheet extends StatelessWidget {
                           separatorBuilder: (_, __) =>
                               const Divider(height: 24),
                           itemBuilder: (BuildContext context, int i) {
+                            final Reservation r = reservations[i];
                             return _ReservationCard(
-                              reservation: reservations[i],
-                              formatDate: _fmt,
+                              reservation: r,
+                              formatDate: (DateTime d) =>
+                                  _fmt(d, r.typePayment),
                             );
                           },
                         );

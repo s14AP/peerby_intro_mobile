@@ -369,7 +369,7 @@ class _HomePageState extends State<HomePage> {
                             final bool hasDecimals =
                                 item.price.truncateToDouble() != item.price;
                             final String priceText = item.price == 0
-                                ? 'Free'
+                                ? 'Gratis'
                                 : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
 
                             return GestureDetector(

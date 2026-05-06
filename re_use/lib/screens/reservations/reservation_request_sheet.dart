@@ -25,17 +25,23 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
   static const Color _border = Color(0xFFD7E6DE);
   static const Color _fill = Color(0xFFF3FAF7);
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _fmt(DateTime d) {
+    final String date =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    if (widget.item.typePayment == TypePayment.uur) {
+      return '$date  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    }
+    return date;
+  }
 
   Future<void> _pickDate({required bool isStart}) async {
     final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
+    final bool isUur = widget.item.typePayment == TypePayment.uur;
+
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: isStart
-          ? now
-          : (_startDate ?? now).add(const Duration(days: 1)),
-      firstDate: now,
+      initialDate: isStart ? now : (_startDate ?? now),
+      firstDate: isStart ? now : (_startDate ?? now),
       lastDate: now.add(const Duration(days: 365)),
       builder: (BuildContext context, Widget? child) => Theme(
         data: Theme.of(context).copyWith(
@@ -44,11 +50,35 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
         child: child!,
       ),
     );
-    if (picked == null) return;
+    if (pickedDate == null) return;
+
+    DateTime picked = pickedDate;
+
+    if (isUur) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (BuildContext context, Widget? child) => Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFF6F9476)),
+          ),
+          child: child!,
+        ),
+      );
+      if (pickedTime == null) return;
+      picked = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    }
+
     setState(() {
       if (isStart) {
         _startDate = picked;
-        if (_endDate != null && _endDate!.isBefore(picked)) {
+        if (_endDate != null && !_endDate!.isAfter(picked)) {
           _endDate = null;
         }
       } else {

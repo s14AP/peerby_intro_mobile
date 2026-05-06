@@ -531,8 +531,14 @@ class _RenterReservationsList extends StatelessWidget {
   static const Color _dark = Color(0xFF2F3E36);
   static const Color _muted = Color(0xFF6D7D74);
 
-  String _fmt(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _fmt(DateTime d, String typePayment) {
+    final String date =
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    if (typePayment == 'uur') {
+      return '$date  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    }
+    return date;
+  }
 
   Color _statusColor(ReservationStatus s) {
     switch (s) {
@@ -624,7 +630,7 @@ class _RenterReservationsList extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_fmt(r.startDate)} – ${_fmt(r.endDate)}',
+                        '${_fmt(r.startDate, r.typePayment)} – ${_fmt(r.endDate, r.typePayment)}',
                         style: const TextStyle(fontSize: 12, color: _muted),
                       ),
                     ],
