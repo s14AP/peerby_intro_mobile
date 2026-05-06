@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:re_use/services/auth_service.dart';
+import 'package:re_use/services/user_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,6 +13,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _addressController = TextEditingController();
   final _authService = AuthService();
 
   static const Color _pageBackground = Color(0xFFF3FAF7);
@@ -28,6 +31,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _errorMessage = 'Passwords do not match');
       return;
     }
+    if (_usernameController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter a username');
+      return;
+    }
+    if (_addressController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Please enter your address');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -35,10 +46,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      await _authService.register(
+      final cred = await _authService.register(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+      // Set displayName
+      await cred.user?.updateDisplayName(_usernameController.text.trim());
+      // Save address to Firestore
+      if (cred.user != null) {
+        final userService = UserService();
+        await userService.updateUserProfile(
+          uid: cred.user!.uid,
+          address: _addressController.text.trim(),
+        );
+      }
       await _authService.signOut();
 
       if (!mounted) return;
@@ -57,6 +78,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -92,6 +115,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
+                  TextField(
+                    controller: _usernameController,
+                    decoration: _inputDecoration(
+                      hint: 'Gebruikersnaam',
+                      icon: Icons.person_outline,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _addressController,
+                    decoration: _inputDecoration(
+                      hint: 'Adres',
+                      icon: Icons.home_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,

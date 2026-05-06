@@ -8,6 +8,7 @@ import 'package:re_use/components/mapView.dart';
 import 'package:re_use/screens/createpage/create_listing_screen.dart';
 import 'package:re_use/services/item_service.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
+import 'package:re_use/screens/profilepage/profile_page.dart';
 import 'package:re_use/types/item.dart';
 
 class HomePage extends StatefulWidget {
@@ -424,6 +425,13 @@ class _HomePageState extends State<HomePage> {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (BuildContext context) => const CreateListingScreen(),
+            ),
+          );
+        },
+        onProfileTap: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const ProfilePage(),
             ),
           );
         },
@@ -945,7 +953,7 @@ class _HeaderActionIcon extends StatelessWidget {
         height: 36,
         child: Center(
           child: Image.asset(
-            assetPath,
+            assetPath ?? '',
             width: 24,
             height: 24,
             color: Colors.white,
