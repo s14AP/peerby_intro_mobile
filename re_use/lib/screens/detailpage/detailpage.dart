@@ -3,6 +3,8 @@ import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/screens/createpage/create_listing_screen.dart';
 import 'package:re_use/screens/homepage/homepage.dart';
 import 'package:re_use/types/item.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:re_use/screens/reservations/reservation_request_sheet.dart';
 
 class DetailPage extends StatefulWidget {
   final Item item;
@@ -306,31 +308,57 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       height: 42,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7FAA8A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                        ),
-                        child: const Text(
-                          'STUUR HUURVERZOEK',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                            // Add padding to the bottom
-                          ),
-                        ),
+                      child: Builder(
+                        builder: (BuildContext context) {
+                          final String? uid =
+                              FirebaseAuth.instance.currentUser?.uid;
+                          final bool isOwner = uid == widget.item.ownerId;
+                          return ElevatedButton(
+                            onPressed: isOwner
+                                ? null
+                                : () {
+                                    showModalBottomSheet<void>(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.white,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(20),
+                                        ),
+                                      ),
+                                      builder: (_) => ReservationRequestSheet(
+                                        item: widget.item,
+                                      ),
+                                    );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF7FAA8A),
+                              disabledBackgroundColor: const Color(0xFFB5CAB9),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            child: Text(
+                              isOwner
+                                  ? 'Dit is jouw advertentie'
+                                  : 'STUUR HUURVERZOEK',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
+
                     const SizedBox(height: 12),
                   ],
                 ),

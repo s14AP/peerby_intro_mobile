@@ -7,6 +7,9 @@ import 'package:re_use/services/auth_service.dart';
 import 'package:re_use/services/item_service.dart';
 import 'package:re_use/types/item.dart';
 import 'package:re_use/screens/profilepage/edit_profile_page.dart';
+import 'package:re_use/screens/reservations/item_reservations_sheet.dart';
+import 'package:re_use/services/reservation_service.dart';
+import 'package:re_use/types/reservation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -90,96 +93,182 @@ class ProfilePage extends StatelessWidget {
           ],
         ),
       ),
-      body: StreamBuilder<List<Item>>(
-        stream: itemService.watchItems(),
-        builder: (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
-          final List<Item> myItems = (snapshot.data ?? <Item>[])
-              .where((Item i) => i.ownerId == user?.uid)
-              .toList();
+      body: StreamBuilder<List<Reservation>>(
+        stream: ReservationService().watchForOwner(user?.uid ?? ''),
+        builder: (BuildContext context, AsyncSnapshot<List<Reservation>> reservSnap) {
+          final List<Reservation> ownerReservations =
+              reservSnap.data ?? <Reservation>[];
 
-          return CustomScrollView(
-            slivers: <Widget>[
-              SliverToBoxAdapter(
-                child: _ProfileHeader(
-                  displayName: displayName,
-                  email: email,
-                  photoUrl: photoUrl,
-                  initials: initials,
-                  memberSince: memberSince,
-                  onSettings: () => _showSettings(context),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Text(
-                    'Mijn advertenties',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: _dark,
+          return StreamBuilder<List<Item>>(
+            stream: itemService.watchItems(),
+            builder: (BuildContext context, AsyncSnapshot<List<Item>> snapshot) {
+              final List<Item> myItems = (snapshot.data ?? <Item>[])
+                  .where((Item i) => i.ownerId == user?.uid)
+                  .toList();
+
+              // Reserveringen gegroepeerd per item
+              final Map<String, List<Reservation>> byItem =
+                  <String, List<Reservation>>{};
+              for (final Reservation r in ownerReservations) {
+                byItem.putIfAbsent(r.itemId, () => <Reservation>[]).add(r);
+              }
+
+              // Huurder: eigen uitgaande verzoeken (filter uit dezelfde owner-stream)
+              // We listen apart hieronder.
+
+              return CustomScrollView(
+                slivers: <Widget>[
+                  SliverToBoxAdapter(
+                    child: _ProfileHeader(
+                      displayName: displayName,
+                      email: email,
+                      photoUrl: photoUrl,
+                      initials: initials,
+                      memberSince: memberSince,
+                      onSettings: () => _showSettings(context),
                     ),
                   ),
-                ),
-              ),
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (myItems.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Column(
-                      children: <Widget>[
-                        Icon(Icons.inbox_outlined, size: 48, color: _muted),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Je hebt nog geen advertenties.',
-                          style: TextStyle(color: _muted, fontSize: 14),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: Text(
+                        'Mijn advertenties',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: _dark,
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.69,
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (myItems.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Column(
+                          children: <Widget>[
+                            Icon(Icons.inbox_outlined, size: 48, color: _muted),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Je hebt nog geen advertenties.',
+                              style: TextStyle(color: _muted, fontSize: 14),
+                            ),
+                          ],
                         ),
-                    delegate: SliverChildBuilderDelegate((
-                      BuildContext context,
-                      int index,
-                    ) {
-                      final Item item = myItems[index];
-                      final bool hasDecimals =
-                          item.price.truncateToDouble() != item.price;
-                      final String priceText = item.price == 0
-                          ? 'Gratis'
-                          : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.69,
+                            ),
+                        delegate: SliverChildBuilderDelegate((
+                          BuildContext context,
+                          int index,
+                        ) {
+                          final Item item = myItems[index];
+                          final bool hasDecimals =
+                              item.price.truncateToDouble() != item.price;
+                          final String priceText = item.price == 0
+                              ? 'Gratis'
+                              : '€${item.price.toStringAsFixed(hasDecimals ? 2 : 0)} / ${item.typePayment.name}';
+                          final List<Reservation> itemRes =
+                              byItem[item.id] ?? <Reservation>[];
+                          final int pendingCount = itemRes
+                              .where(
+                                (Reservation r) =>
+                                    r.status == ReservationStatus.pending,
+                              )
+                              .length;
 
-                      return ItemCard(
-                        title: item.title,
-                        distance: item.locationCity,
-                        imageUrl: item.imageUrl,
-                        ownerName: item.ownerName,
-                        ownerAvatarUrl: item.ownerAvatarUrl,
-                        price: priceText,
-                      );
-                    }, childCount: myItems.length),
+                          return GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet<void>(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    ItemReservationsSheet(item: item),
+                              );
+                            },
+                            child: Stack(
+                              children: <Widget>[
+                                ItemCard(
+                                  title: item.title,
+                                  distance: item.locationCity,
+                                  imageUrl: item.imageUrl,
+                                  ownerName: item.ownerName,
+                                  ownerAvatarUrl: item.ownerAvatarUrl,
+                                  price: priceText,
+                                ),
+                                if (pendingCount > 0)
+                                  Positioned(
+                                    top: 6,
+                                    left: 6,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.shade600,
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '$pendingCount nieuw',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }, childCount: myItems.length),
+                      ),
+                    ),
+
+                  // ── Mijn huurverzoeken (huurder-sectie) ──────────────
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Text(
+                        'Mijn huurverzoeken',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: _dark,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-            ],
+                  SliverToBoxAdapter(
+                    child: _RenterReservationsList(uid: user?.uid ?? ''),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              );
+            },
           );
         },
       ),
+
       extendBody: true,
       bottomNavigationBar: BottomNavBar(
         onHomeTap: () {
@@ -431,6 +520,140 @@ class _SettingsTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RenterReservationsList extends StatelessWidget {
+  const _RenterReservationsList({required this.uid});
+  final String uid;
+
+  static const Color _dark = Color(0xFF2F3E36);
+  static const Color _muted = Color(0xFF6D7D74);
+
+  String _fmt(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  Color _statusColor(ReservationStatus s) {
+    switch (s) {
+      case ReservationStatus.accepted:
+        return Colors.green.shade600;
+      case ReservationStatus.rejected:
+        return Colors.red.shade400;
+      case ReservationStatus.pending:
+        return Colors.orange.shade600;
+    }
+  }
+
+  String _statusLabel(ReservationStatus s) {
+    switch (s) {
+      case ReservationStatus.accepted:
+        return 'Geaccepteerd';
+      case ReservationStatus.rejected:
+        return 'Geweigerd';
+      case ReservationStatus.pending:
+        return 'In afwachting';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Reservation>>(
+      stream: ReservationService().watchForRenter(uid),
+      builder: (BuildContext context, AsyncSnapshot<List<Reservation>> snap) {
+        final List<Reservation> reservations = snap.data ?? <Reservation>[];
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (reservations.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+            child: Text(
+              'Je hebt nog geen huurverzoeken gestuurd.',
+              style: TextStyle(color: _muted, fontSize: 14),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: reservations.length,
+          separatorBuilder: (_, __) => const Divider(height: 20),
+          itemBuilder: (BuildContext context, int i) {
+            final Reservation r = reservations[i];
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    r.itemImageUrl,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 56,
+                      height: 56,
+                      color: const Color(0xFFE3EEE9),
+                      child: const Icon(
+                        Icons.image_not_supported_outlined,
+                        size: 20,
+                        color: Color(0xFF9AADA4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        r.itemTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: _dark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_fmt(r.startDate)} – ${_fmt(r.endDate)}',
+                        style: const TextStyle(fontSize: 12, color: _muted),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _statusColor(r.status).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    _statusLabel(r.status),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _statusColor(r.status),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
