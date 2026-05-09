@@ -588,7 +588,7 @@ class _RenterReservationsList extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: reservations.length,
-          separatorBuilder: (_, __) => const Divider(height: 20),
+          separatorBuilder: (_, _) => const Divider(height: 20),
           itemBuilder: (BuildContext context, int i) {
             final Reservation r = reservations[i];
             return Row(
@@ -601,7 +601,7 @@ class _RenterReservationsList extends StatelessWidget {
                     width: 56,
                     height: 56,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 56,
                       height: 56,
                       color: const Color(0xFFE3EEE9),

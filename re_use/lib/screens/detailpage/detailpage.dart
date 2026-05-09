@@ -5,6 +5,8 @@ import 'package:re_use/screens/homepage/homepage.dart';
 import 'package:re_use/types/item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:re_use/screens/reservations/reservation_request_sheet.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class DetailPage extends StatefulWidget {
   final Item item;
@@ -20,17 +22,15 @@ class _DetailPageState extends State<DetailPage> {
   int _currentImageIndex = 0;
 
   List<String> get _imageUrls {
-    final List<String> candidates = widget.item.imageUrl
-        .split(',')
-        .map((String url) => url.trim())
-        .where((String url) => url.isNotEmpty)
-        .toList(growable: false);
-
-    if (candidates.isEmpty) {
-      return <String>[widget.item.imageUrl];
+    if (widget.item.imageUrl.startsWith('data:')) {
+      return [widget.item.imageUrl];
     }
-
-    return candidates;
+    final candidates = widget.item.imageUrl
+        .split(',')
+        .map((url) => url.trim())
+        .where((url) => url.isNotEmpty)
+        .toList(growable: false);
+    return candidates.isEmpty ? [widget.item.imageUrl] : candidates;
   }
 
   static const Color _pageBackground = Color(0xFFF3FAF7);
@@ -61,6 +61,33 @@ class _DetailPageState extends State<DetailPage> {
 
     return '€ ${widget.item.price.toStringAsFixed(hasDecimals ? 2 : 0)}/${widget.item.typePayment.name}';
   }
+
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image/')) {
+      final bytes = base64Decode(imageUrl.split(',').last);
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (_, __, ___) => _imageError(),
+      );
+    }
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _imageError(),
+    );
+  }
+
+  Widget _imageError() => Container(
+    color: const Color(0xFFE3E3E3),
+    alignment: Alignment.center,
+    child: const Icon(
+      Icons.image_not_supported_outlined,
+      color: Color(0xFF8E8E8E),
+      size: 34,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -146,21 +173,7 @@ class _DetailPageState extends State<DetailPage> {
                         });
                       },
                       itemBuilder: (BuildContext context, int index) {
-                        return Image.network(
-                          _imageUrls[index],
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: const Color(0xFFE3E3E3),
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.image_not_supported_outlined,
-                                color: Color(0xFF8E8E8E),
-                                size: 34,
-                              ),
-                            );
-                          },
-                        );
+                        return _buildImage(_imageUrls[index]);
                       },
                     ),
                   ),

@@ -17,7 +17,7 @@ void main() async {
     await loadMapsScript(dotenv.env['google_maps_api_key'] ?? '');
   }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await ItemService().seedItemsIfEmpty();
+  // await ItemService().seedItemsIfEmpty();
 
   runApp(
     DevicePreview(

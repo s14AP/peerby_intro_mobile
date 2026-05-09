@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class ItemCard extends StatelessWidget {
   static const double _imageHeight = 140;
@@ -19,6 +21,32 @@ class ItemCard extends StatelessWidget {
     required this.ownerAvatarUrl,
     required this.price,
   });
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.startsWith('data:image/')) {
+      final bytes = base64Decode(imageUrl.split(',').last);
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (_, _, _) => _imageError(),
+      );
+    }
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _imageError(),
+    );
+  }
+
+  Widget _imageError() => Container(
+    color: const Color(0xFFF2F2F2),
+    alignment: Alignment.center,
+    child: const Icon(
+      Icons.image_not_supported_outlined,
+      color: Color(0xFF9A9A9A),
+      size: 28,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -52,22 +80,7 @@ class ItemCard extends StatelessWidget {
                 child: SizedBox(
                   height: _imageHeight,
                   width: double.infinity,
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: const Color(0xFFF2F2F2),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Color(0xFF9A9A9A),
-                          size: 28,
-                        ),
-                      );
-                    },
-                  ),
+                  child: _buildImage(imageUrl),
                 ),
               ),
 

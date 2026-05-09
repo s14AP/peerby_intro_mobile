@@ -5,6 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:re_use/services/auth_service.dart';
 import 'package:re_use/services/item_service.dart';
 import 'package:re_use/types/item.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 const Color _teal = Color(0xFF6F9476);
 const Color _bg = Color(0xFFF3FAF7);
@@ -43,7 +47,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageBase64;
   final TextEditingController _priceController = TextEditingController();
 
   final AuthService _authService = AuthService();
@@ -59,7 +64,6 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cityController.dispose();
-    _imageUrlController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -100,12 +104,21 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _submit() async {
+    if (_pickedImageBase64 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecteer een afbeelding.')),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final user = _authService.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Je moet ingelogd zijn om een item toe te voegen.')),
+        const SnackBar(
+          content: Text('Je moet ingelogd zijn om een item toe te voegen.'),
+        ),
       );
       return;
     }
@@ -130,7 +143,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             : _descriptionController.text.trim(),
         locationCity: city,
         locationCountry: countryEn,
-        imageUrl: _imageUrlController.text.trim(),
+        imageUrl: _pickedImageBase64!,
         ownerName: ownerName,
         ownerAvatarUrl: user.photoURL ?? '',
         category: _selectedCategory,
@@ -147,9 +160,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final String message = lat != null
           ? 'Item gepubliceerd en zichtbaar op de kaart!'
           : 'Item gepubliceerd, maar stad niet gevonden op de kaart. Controleer de stadsnaam.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
@@ -159,6 +172,54 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showImageSourceSheet() {
+    if (kIsWeb) {
+      _pickImage(ImageSource.gallery);
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Galerij'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? xFile = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 60,
+      maxWidth: 800,
+      maxHeight: 800,
+    );
+    if (xFile == null) return;
+    final bytes = await xFile.readAsBytes();
+    setState(() {
+      _pickedImageBytes = bytes;
+      _pickedImageBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+    });
   }
 
   @override
@@ -276,14 +337,75 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               const SizedBox(height: 24),
               _SectionLabel('Afbeelding'),
               const SizedBox(height: 10),
-              _Field(
-                controller: _imageUrlController,
-                label: 'Afbeelding URL',
-                hint: 'https://…',
-                keyboardType: TextInputType.url,
-                validator: (String? v) =>
-                    v == null || v.trim().isEmpty ? 'Afbeelding is verplicht' : null,
-              ),
+              _pickedImageBytes != null
+                  ? Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(
+                            _pickedImageBytes!,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => _showImageSourceSheet(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                'Wijzigen',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : GestureDetector(
+                      onTap: () => _showImageSourceSheet(),
+                      child: Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFB5CFC0)),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo_outlined,
+                              color: Color(0xFF7A9183),
+                              size: 32,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Kies een afbeelding',
+                              style: TextStyle(
+                                color: Color(0xFF7A9183),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -449,10 +571,7 @@ class _DropdownField<T> extends StatelessWidget {
         ),
       ),
       items: items.map((T item) {
-        return DropdownMenuItem<T>(
-          value: item,
-          child: Text(itemLabel(item)),
-        );
+        return DropdownMenuItem<T>(value: item, child: Text(itemLabel(item)));
       }).toList(),
     );
   }

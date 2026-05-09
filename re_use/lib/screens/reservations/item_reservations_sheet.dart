@@ -105,8 +105,7 @@ class ItemReservationsSheet extends StatelessWidget {
                           controller: scrollController,
                           padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                           itemCount: reservations.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 24),
+                          separatorBuilder: (_, _) => const Divider(height: 24),
                           itemBuilder: (BuildContext context, int i) {
                             final Reservation r = reservations[i];
                             return _ReservationCard(
