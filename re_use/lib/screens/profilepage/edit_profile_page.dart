@@ -146,6 +146,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             controller: _addressController,
                             decoration: InputDecoration(
                               labelText: 'Adres *',
+                              hintText: 'bijv. Nieuwstraat 1, 2000 Antwerpen',
                               filled: true,
                               fillColor: _fill,
                               border: OutlineInputBorder(
