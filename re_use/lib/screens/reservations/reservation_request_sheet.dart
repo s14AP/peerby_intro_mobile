@@ -67,6 +67,23 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
     try {
       final User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
+      final bool overlap = await ReservationService().hasOverlap(
+        widget.item.id,
+        _startDate!,
+        _endDate!,
+      );
+      if (overlap) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Dit item is al gereserveerd in de gekozen periode.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
       await ReservationService().createReservation(
         Reservation(
           id: '',
@@ -163,10 +180,7 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
                           children: <Widget>[
                             const Text(
                               'Uren',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: _muted,
-                              ),
+                              style: TextStyle(fontSize: 11, color: _muted),
                             ),
                             const SizedBox(height: 2),
                             TextField(
