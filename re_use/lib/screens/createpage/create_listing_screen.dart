@@ -391,9 +391,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       firstDate: isStart ? now : (_availableFrom ?? now),
       lastDate: now.add(const Duration(days: 365 * 2)),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: _teal),
-        ),
+        data: Theme.of(
+          context,
+        ).copyWith(colorScheme: const ColorScheme.light(primary: _teal)),
         child: child!,
       ),
     );
@@ -545,7 +545,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   Expanded(
                     child: _AvailabilityButton(
                       label: 'Van',
-                      value: _availableFrom != null ? _fmtDate(_availableFrom!) : null,
+                      value: _availableFrom != null
+                          ? _fmtDate(_availableFrom!)
+                          : null,
                       onTap: () => _pickAvailability(isStart: true),
                     ),
                   ),
@@ -553,7 +555,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   Expanded(
                     child: _AvailabilityButton(
                       label: 'Tot',
-                      value: _availableTo != null ? _fmtDate(_availableTo!) : null,
+                      value: _availableTo != null
+                          ? _fmtDate(_availableTo!)
+                          : null,
                       onTap: () => _pickAvailability(isStart: false),
                     ),
                   ),
@@ -668,14 +672,19 @@ class _AvailabilityButton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6D7D74))),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF6D7D74)),
+            ),
             const SizedBox(height: 2),
             Text(
               value ?? 'Kies datum',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: value != null ? const Color(0xFF2F3E36) : const Color(0xFF9AADA4),
+                color: value != null
+                    ? const Color(0xFF2F3E36)
+                    : const Color(0xFF9AADA4),
               ),
             ),
           ],

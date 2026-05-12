@@ -187,6 +187,31 @@ class _ReservationCardState extends State<_ReservationCard> {
   static const Color _muted = Color(0xFF6D7D74);
 
   Future<void> _updateStatus(ReservationStatus status) async {
+    if (status == ReservationStatus.accepted) {
+      final bool overlap = await ReservationService().hasOverlap(
+        widget.reservation.itemId,
+        widget.reservation.startDate,
+        widget.reservation.endDate,
+      );
+      if (overlap) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Dit item is al gereserveerd in deze periode.',
+              ),
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height * 0.72,
+                left: 16,
+                right: 16,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
     setState(() => _loading = true);
     try {
       await ReservationService().updateStatus(widget.reservation.id, status);

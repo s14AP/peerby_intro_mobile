@@ -79,9 +79,15 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
       if (overlap) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
+            SnackBar(
+              content: const Text(
                 'Dit item is al gereserveerd in de gekozen periode.',
+              ),
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height * 0.72,
+                left: 16,
+                right: 16,
               ),
             ),
           );

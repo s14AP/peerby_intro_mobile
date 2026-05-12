@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:re_use/screens/auth/login_screen.dart';
 import 'package:re_use/screens/profilepage/edit_profile_page.dart';
 import 'package:re_use/services/auth_service.dart';
 
@@ -69,10 +70,14 @@ class ProfileSettingsSheet extends StatelessWidget {
               label: 'Uitloggen',
               color: Colors.red.shade600,
               onTap: () async {
-                Navigator.of(context).pop();
                 await AuthService().signOut();
                 if (context.mounted) {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                    (route) => false,
+                  );
                 }
               },
             ),
