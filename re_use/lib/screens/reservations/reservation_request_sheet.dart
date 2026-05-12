@@ -34,9 +34,13 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? now : (_startDate ?? now),
-      firstDate: isStart ? now : (_startDate ?? now),
-      lastDate: now.add(const Duration(days: 365)),
+      initialDate: isStart
+          ? (widget.item.availableFrom ?? now)
+          : (_startDate ?? widget.item.availableFrom ?? now),
+      firstDate: isStart
+          ? (widget.item.availableFrom ?? now)
+          : (_startDate ?? widget.item.availableFrom ?? now),
+      lastDate: widget.item.availableTo ?? now.add(const Duration(days: 365)),
       builder: (BuildContext context, Widget? child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(primary: Color(0xFF6F9476)),

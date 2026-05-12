@@ -46,6 +46,8 @@ class ItemService {
       latitude: item.latitude,
       longitude: item.longitude,
       createdAt: item.createdAt,
+      availableFrom: item.availableFrom,
+      availableTo: item.availableTo,
     );
 
     await docRef.set(itemWithId.toMap());

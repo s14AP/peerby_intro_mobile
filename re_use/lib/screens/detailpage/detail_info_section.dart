@@ -82,7 +82,19 @@ class DetailInfoSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Categorie: ${item.category}\nLocatie: ${item.locationCity}, ${item.locationCountry}\nType: ${item.typePayment.name}',
+              () {
+                String fmt(DateTime d) =>
+                    '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+                String beschikbaar = 'Altijd beschikbaar';
+                if (item.availableFrom != null && item.availableTo != null) {
+                  beschikbaar = '${fmt(item.availableFrom!)} – ${fmt(item.availableTo!)}';
+                } else if (item.availableFrom != null) {
+                  beschikbaar = 'Vanaf ${fmt(item.availableFrom!)}';
+                } else if (item.availableTo != null) {
+                  beschikbaar = 'Tot ${fmt(item.availableTo!)}';
+                }
+                return 'Categorie: ${item.category}\nLocatie: ${item.locationCity}, ${item.locationCountry}\nType: ${item.typePayment.name}\nBeschikbaarheid: $beschikbaar';
+              }(),
               style: const TextStyle(fontSize: 13, height: 1.35, color: _textDark),
             ),
           ),

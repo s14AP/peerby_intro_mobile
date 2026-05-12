@@ -26,6 +26,8 @@ class Item {
     this.longitude,
     this.ownerId = '',
     this.createdAt,
+    this.availableFrom,
+    this.availableTo,
   });
 
   final String id;
@@ -43,6 +45,8 @@ class Item {
   final double? latitude;
   final double? longitude;
   final DateTime? createdAt;
+  final DateTime? availableFrom;
+  final DateTime? availableTo;
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -63,6 +67,8 @@ class Item {
       'createdAt': createdAt == null
           ? FieldValue.serverTimestamp()
           : Timestamp.fromDate(createdAt!),
+      'availableFrom': availableFrom == null ? null : Timestamp.fromDate(availableFrom!),
+      'availableTo': availableTo == null ? null : Timestamp.fromDate(availableTo!),
     };
   }
 
@@ -90,6 +96,12 @@ class Item {
       latitude: map['latitude'] as double?,
       longitude: map['longitude'] as double?,
       createdAt: createdAt,
+      availableFrom: map['availableFrom'] is Timestamp
+          ? (map['availableFrom'] as Timestamp).toDate()
+          : null,
+      availableTo: map['availableTo'] is Timestamp
+          ? (map['availableTo'] as Timestamp).toDate()
+          : null,
     );
   }
 }

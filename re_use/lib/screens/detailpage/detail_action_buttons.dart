@@ -16,6 +16,9 @@ class DetailActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final String? uid = FirebaseAuth.instance.currentUser?.uid;
     final bool isOwner = uid == item.ownerId;
+    final DateTime now = DateTime.now();
+    final bool isAvailable =
+        item.availableTo == null || item.availableTo!.isAfter(now);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -76,7 +79,7 @@ class DetailActionButtons extends StatelessWidget {
             width: double.infinity,
             height: 42,
             child: ElevatedButton(
-              onPressed: isOwner
+              onPressed: (isOwner || !isAvailable)
                   ? null
                   : () {
                       showModalBottomSheet<void>(
@@ -97,7 +100,11 @@ class DetailActionButtons extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
               ),
               child: Text(
-                isOwner ? 'Dit is jouw advertentie' : 'STUUR HUURVERZOEK',
+                isOwner
+                    ? 'Dit is jouw advertentie'
+                    : !isAvailable
+                        ? 'Momenteel niet beschikbaar'
+                        : 'STUUR HUURVERZOEK',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,

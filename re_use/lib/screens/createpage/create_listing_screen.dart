@@ -62,6 +62,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   bool _isSubmitting = false;
   _LocationSource? _locationSource;
   bool _isFetchingLocation = false;
+  DateTime? _availableFrom;
+  DateTime? _availableTo;
 
   @override
   void dispose() {
@@ -306,6 +308,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         ownerId: user.uid,
         latitude: lat,
         longitude: lng,
+        availableFrom: _availableFrom,
+        availableTo: _availableTo,
       );
 
       await _itemService.createItem(item);
@@ -373,6 +377,36 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     setState(() {
       _pickedImageBytes = bytes;
       _pickedImageBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+    });
+  }
+
+  String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  Future<void> _pickAvailability({required bool isStart}) async {
+    final DateTime now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? now : (_availableFrom ?? now),
+      firstDate: isStart ? now : (_availableFrom ?? now),
+      lastDate: now.add(const Duration(days: 365 * 2)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: _teal),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    setState(() {
+      if (isStart) {
+        _availableFrom = picked;
+        if (_availableTo != null && !_availableTo!.isAfter(picked)) {
+          _availableTo = null;
+        }
+      } else {
+        _availableTo = picked;
+      }
     });
   }
 
@@ -499,6 +533,33 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 ],
               ),
               const SizedBox(height: 24),
+              CreateSectionLabel('Beschikbaarheid'),
+              const SizedBox(height: 4),
+              const Text(
+                'Laat leeg als het item altijd beschikbaar is.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6D7D74)),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _AvailabilityButton(
+                      label: 'Van',
+                      value: _availableFrom != null ? _fmtDate(_availableFrom!) : null,
+                      onTap: () => _pickAvailability(isStart: true),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _AvailabilityButton(
+                      label: 'Tot',
+                      value: _availableTo != null ? _fmtDate(_availableTo!) : null,
+                      onTap: () => _pickAvailability(isStart: false),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
               CreateSectionLabel('Prijs & type'),
               const SizedBox(height: 10),
               Row(
@@ -576,6 +637,48 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AvailabilityButton extends StatelessWidget {
+  const _AvailabilityButton({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String? value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFD0E4DB)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF6D7D74))),
+            const SizedBox(height: 2),
+            Text(
+              value ?? 'Kies datum',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: value != null ? const Color(0xFF2F3E36) : const Color(0xFF9AADA4),
+              ),
+            ),
+          ],
         ),
       ),
     );
