@@ -1,18 +1,16 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:re_use/screens/createpage/create_listing_widgets.dart';
 import 'package:re_use/services/auth_service.dart';
 import 'package:re_use/services/item_service.dart';
 import 'package:re_use/types/item.dart';
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 
 const Color _teal = Color(0xFF6F9476);
 const Color _bg = Color(0xFFF3FAF7);
-const Color _dark = Color(0xFF2F3E36);
 
 const List<String> _categories = <String>[
   'Crafts',
@@ -47,9 +45,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
   Uint8List? _pickedImageBytes;
   String? _pickedImageBase64;
-  final TextEditingController _priceController = TextEditingController();
 
   final AuthService _authService = AuthService();
   final ItemService _itemService = ItemService();
@@ -68,27 +66,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     super.dispose();
   }
 
-  Future<({double? lat, double? lng})> _geocode(
-    String city,
-    String country,
-  ) async {
+  Future<({double? lat, double? lng})> _geocode(String city, String country) async {
     try {
       final Uri url = Uri.https(
         'nominatim.openstreetmap.org',
         '/search',
-        <String, String>{
-          'city': city,
-          'country': country,
-          'format': 'json',
-          'limit': '1',
-        },
+        <String, String>{'city': city, 'country': country, 'format': 'json', 'limit': '1'},
       );
       final http.Response response = await http.get(
         url,
-        headers: <String, String>{
-          'User-Agent': 're-use-app/1.0',
-          'Accept': 'application/json',
-        },
+        headers: <String, String>{'User-Agent': 're-use-app/1.0', 'Accept': 'application/json'},
       );
       if (response.statusCode != 200) return (lat: null, lng: null);
       final List<dynamic> results = jsonDecode(response.body) as List<dynamic>;
@@ -110,21 +97,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       );
       return;
     }
-
     if (!_formKey.currentState!.validate()) return;
 
     final user = _authService.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Je moet ingelogd zijn om een item toe te voegen.'),
-        ),
+        const SnackBar(content: Text('Je moet ingelogd zijn om een item toe te voegen.')),
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
-
     try {
       final String city = _cityController.text.trim();
       final String countryEn = _countryToEnglish[_selectedCountry]!;
@@ -160,9 +143,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final String message = lat != null
           ? 'Item gepubliceerd en zichtbaar op de kaart!'
           : 'Item gepubliceerd, maar stad niet gevonden op de kaart. Controleer de stadsnaam.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
@@ -184,7 +165,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: <Widget>[
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
               title: const Text('Camera'),
@@ -215,7 +196,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       maxHeight: 800,
     );
     if (xFile == null) return;
-    final bytes = await xFile.readAsBytes();
+    final Uint8List bytes = await xFile.readAsBytes();
     setState(() {
       _pickedImageBytes = bytes;
       _pickedImageBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
@@ -246,9 +227,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
             children: <Widget>[
-              _SectionLabel('Over het item'),
+              CreateSectionLabel('Over het item'),
               const SizedBox(height: 10),
-              _Field(
+              CreateField(
                 controller: _titleController,
                 label: 'Titel',
                 hint: 'bijv. Boormachine Bosch',
@@ -256,7 +237,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     v == null || v.trim().isEmpty ? 'Titel is verplicht' : null,
               ),
               const SizedBox(height: 12),
-              _Field(
+              CreateField(
                 controller: _descriptionController,
                 label: 'Beschrijving',
                 hint: 'Staat, inclusief accessoires, bijzonderheden…',
@@ -264,7 +245,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 maxLines: 6,
               ),
               const SizedBox(height: 12),
-              _DropdownField<String>(
+              CreateDropdownField<String>(
                 label: 'Categorie',
                 value: _selectedCategory,
                 items: _categories,
@@ -274,9 +255,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              _SectionLabel('Locatie'),
+              CreateSectionLabel('Locatie'),
               const SizedBox(height: 10),
-              _DropdownField<String>(
+              CreateDropdownField<String>(
                 label: 'Land',
                 value: _selectedCountry,
                 items: _countries,
@@ -286,7 +267,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              _Field(
+              CreateField(
                 controller: _cityController,
                 label: 'Stad',
                 hint: 'bijv. Antwerpen',
@@ -294,22 +275,18 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     v == null || v.trim().isEmpty ? 'Stad is verplicht' : null,
               ),
               const SizedBox(height: 24),
-              _SectionLabel('Prijs & type'),
+              CreateSectionLabel('Prijs & type'),
               const SizedBox(height: 10),
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: _Field(
+                    child: CreateField(
                       controller: _priceController,
                       label: 'Prijs (€)',
                       hint: '0',
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       validator: (String? v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Verplicht';
-                        }
+                        if (v == null || v.trim().isEmpty) return 'Verplicht';
                         if (double.tryParse(v.trim()) == null ||
                             double.parse(v.trim()) < 0) {
                           return 'Ongeldig';
@@ -320,92 +297,25 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _DropdownField<TypePayment>(
+                    child: CreateDropdownField<TypePayment>(
                       label: 'Per',
                       value: _selectedTypePayment,
                       items: TypePayment.values,
                       itemLabel: (TypePayment t) => t.name,
                       onChanged: (TypePayment? v) {
-                        if (v != null) {
-                          setState(() => _selectedTypePayment = v);
-                        }
+                        if (v != null) setState(() => _selectedTypePayment = v);
                       },
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              _SectionLabel('Afbeelding'),
+              CreateSectionLabel('Afbeelding'),
               const SizedBox(height: 10),
-              _pickedImageBytes != null
-                  ? Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.memory(
-                            _pickedImageBytes!,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: GestureDetector(
-                            onTap: () => _showImageSourceSheet(),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'Wijzigen',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : GestureDetector(
-                      onTap: () => _showImageSourceSheet(),
-                      child: Container(
-                        height: 120,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFB5CFC0)),
-                        ),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              color: Color(0xFF7A9183),
-                              size: 32,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Kies een afbeelding',
-                              style: TextStyle(
-                                color: Color(0xFF7A9183),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
+              CreateImagePicker(
+                imageBytes: _pickedImageBytes,
+                onTap: _showImageSourceSheet,
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -442,137 +352,6 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: _teal,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.controller,
-    required this.label,
-    this.hint,
-    this.minLines,
-    this.maxLines = 1,
-    this.keyboardType,
-    this.validator,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String? hint;
-  final int? minLines;
-  final int? maxLines;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      minLines: minLines,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: const TextStyle(fontSize: 15, color: _dark),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(color: Color(0xFF7A9183)),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFB5CFC0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFB5CFC0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _DropdownField<T> extends StatelessWidget {
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.itemLabel,
-    required this.onChanged,
-  });
-
-  final String label;
-  final T value;
-  final List<T> items;
-  final String Function(T) itemLabel;
-  final void Function(T?) onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      onChanged: onChanged,
-      style: const TextStyle(fontSize: 15, color: _dark),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF7A9183)),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFB5CFC0)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFB5CFC0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _teal, width: 1.5),
-        ),
-      ),
-      items: items.map((T item) {
-        return DropdownMenuItem<T>(value: item, child: Text(itemLabel(item)));
-      }).toList(),
     );
   }
 }

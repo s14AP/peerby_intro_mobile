@@ -1,4 +1,5 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -61,27 +62,29 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final Stream<User?> _authStream = AuthService().authStateChanges;
+
+  @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: AuthService().authStateChanges,
+    return StreamBuilder<User?>(
+      stream: _authStream,
       builder: (context, snapshot) {
-        // still loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
-        // logged in → go to homepage
         if (snapshot.hasData) {
           return const HomePage();
         }
-
-        // not logged in → go to login
         return const LoginScreen();
       },
     );

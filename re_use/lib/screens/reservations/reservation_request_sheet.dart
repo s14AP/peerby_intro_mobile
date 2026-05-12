@@ -16,7 +16,9 @@ class ReservationRequestSheet extends StatefulWidget {
 class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
   DateTime? _startDate;
   DateTime? _endDate;
+  int? _hours;
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _hoursController = TextEditingController();
   bool _loading = false;
 
   static const Color _teal = Color(0xFF6F9476);
@@ -25,20 +27,12 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
   static const Color _border = Color(0xFFD7E6DE);
   static const Color _fill = Color(0xFFF3FAF7);
 
-  String _fmt(DateTime d) {
-    final String date =
-        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    if (widget.item.typePayment == TypePayment.uur) {
-      return '$date  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
-    }
-    return date;
-  }
+  String _fmt(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
   Future<void> _pickDate({required bool isStart}) async {
     final DateTime now = DateTime.now();
-    final bool isUur = widget.item.typePayment == TypePayment.uur;
-
-    final DateTime? pickedDate = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStart ? now : (_startDate ?? now),
       firstDate: isStart ? now : (_startDate ?? now),
@@ -50,37 +44,11 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
         child: child!,
       ),
     );
-    if (pickedDate == null) return;
-
-    DateTime picked = pickedDate;
-
-    if (isUur) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-        builder: (BuildContext context, Widget? child) => Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFF6F9476)),
-          ),
-          child: child!,
-        ),
-      );
-      if (pickedTime == null) return;
-      picked = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-    }
-
+    if (picked == null) return;
     setState(() {
       if (isStart) {
         _startDate = picked;
-        if (_endDate != null && !_endDate!.isAfter(picked)) {
-          _endDate = null;
-        }
+        if (_endDate != null && !_endDate!.isAfter(picked)) _endDate = null;
       } else {
         _endDate = picked;
       }
@@ -88,7 +56,13 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
   }
 
   Future<void> _submit() async {
-    if (_startDate == null || _endDate == null) return;
+    final bool isUur = widget.item.typePayment == TypePayment.uur;
+    if (_startDate == null) return;
+    if (isUur) {
+      if (_hours == null || _hours! <= 0) return;
+      _endDate = _startDate!.add(Duration(hours: _hours!));
+    }
+    if (_endDate == null) return;
     setState(() => _loading = true);
     try {
       final User? user = FirebaseAuth.instance.currentUser;
@@ -124,12 +98,16 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
   @override
   void dispose() {
     _messageController.dispose();
+    _hoursController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool canSubmit = _startDate != null && _endDate != null && !_loading;
+    final bool isUur = widget.item.typePayment == TypePayment.uur;
+    final bool canSubmit = isUur
+        ? _startDate != null && (_hours ?? 0) > 0 && !_loading
+        : _startDate != null && _endDate != null && !_loading;
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -166,25 +144,90 @@ class _ReservationRequestSheetState extends State<ReservationRequestSheet> {
                 style: const TextStyle(fontSize: 13, color: _muted),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _DateButton(
-                      label: 'Van',
-                      value: _startDate != null ? _fmt(_startDate!) : null,
-                      onTap: () => _pickDate(isStart: true),
+              if (isUur)
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _fill,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: _border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const Text(
+                              'Uren',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _muted,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            TextField(
+                              controller: _hoursController,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _dark,
+                              ),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                border: InputBorder.none,
+                                hintText: 'bv. 3',
+                                hintStyle: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF9AADA4),
+                                ),
+                              ),
+                              onChanged: (String v) {
+                                setState(() {
+                                  _hours = int.tryParse(v);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _DateButton(
-                      label: 'Tot',
-                      value: _endDate != null ? _fmt(_endDate!) : null,
-                      onTap: () => _pickDate(isStart: false),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DateButton(
+                        label: 'Datum',
+                        value: _startDate != null ? _fmt(_startDate!) : null,
+                        onTap: () => _pickDate(isStart: true),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _DateButton(
+                        label: 'Van',
+                        value: _startDate != null ? _fmt(_startDate!) : null,
+                        onTap: () => _pickDate(isStart: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DateButton(
+                        label: 'Tot',
+                        value: _endDate != null ? _fmt(_endDate!) : null,
+                        onTap: () => _pickDate(isStart: false),
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               TextField(
                 controller: _messageController,

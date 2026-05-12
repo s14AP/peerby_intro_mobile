@@ -5,7 +5,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:re_use/components/bottomNavBar.dart';
 import 'package:re_use/components/card.dart';
 import 'package:re_use/components/mapView.dart';
+import 'package:re_use/screens/chat/chat_list_screen.dart';
 import 'package:re_use/screens/createpage/create_listing_screen.dart';
+import 'package:re_use/screens/homepage/home_filters.dart';
 import 'package:re_use/services/item_service.dart';
 import 'package:re_use/screens/detailpage/detailpage.dart';
 import 'package:re_use/screens/profilepage/profile_page.dart';
@@ -131,7 +133,7 @@ class _HomePageState extends State<HomePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _DistanceSheet(
+      builder: (_) => HomeDistanceSheet(
         current: _filterMaxDistance,
         onSelect: (double? v) => setState(() => _filterMaxDistance = v),
       ),
@@ -144,7 +146,7 @@ class _HomePageState extends State<HomePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _OptionSheet(
+      builder: (_) => HomeOptionSheet(
         title: 'Categorie',
         options: categories,
         selected: _filterCategory,
@@ -160,7 +162,7 @@ class _HomePageState extends State<HomePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _SliderSheet(
+      builder: (_) => HomeSliderSheet(
         title: 'Max prijs',
         unit: '€',
         unitBefore: true,
@@ -182,7 +184,7 @@ class _HomePageState extends State<HomePage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _OptionSheet(
+      builder: (_) => HomeOptionSheet(
         title: 'Type',
         options: labels,
         selected: selectedLabel,
@@ -247,7 +249,7 @@ class _HomePageState extends State<HomePage> {
           child: Divider(height: 1, thickness: 1, color: _filterFill),
         ),
         actions: <Widget>[
-          _HeaderActionIcon(
+          HomeHeaderActionIcon(
             assetPath: _showMap
                 ? 'assets/navBar/list.png'
                 : 'assets/navBar/map.png',
@@ -255,7 +257,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 28),
-            child: _HeaderActionIcon(
+            child: HomeHeaderActionIcon(
               assetPath: 'assets/navBar/bell.png',
               onTap: () {},
             ),
@@ -303,7 +305,7 @@ class _HomePageState extends State<HomePage> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: <Widget>[
-                          _FilterButton(
+                          HomeFilterButton(
                             label: _filterMaxDistance != null
                                 ? '≤ ${_filterMaxDistance!.toStringAsFixed(0)} km'
                                 : 'Afstand',
@@ -312,14 +314,14 @@ class _HomePageState extends State<HomePage> {
                             onTap: () => _showDistanceFilter(context),
                           ),
                           const SizedBox(width: 8),
-                          _FilterButton(
+                          HomeFilterButton(
                             label: _filterCategory ?? 'Categorie',
                             active: _filterCategory != null,
                             onTap: () =>
                                 _showCategoryFilter(context, categories),
                           ),
                           const SizedBox(width: 8),
-                          _FilterButton(
+                          HomeFilterButton(
                             label: _filterMaxPrice != null
                                 ? '≤ €${_filterMaxPrice!.toStringAsFixed(0)}'
                                 : 'Prijs',
@@ -327,7 +329,7 @@ class _HomePageState extends State<HomePage> {
                             onTap: () => _showPriceFilter(context, maxPrice),
                           ),
                           const SizedBox(width: 8),
-                          _FilterButton(
+                          HomeFilterButton(
                             label: _filterTypePayment != null
                                 ? _typeLabel(_filterTypePayment!)
                                 : 'Type',
@@ -377,21 +379,19 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          BuildContext context,
-                                          Animation<double> animation,
-                                          Animation<double> secondaryAnimation,
-                                        ) => DetailPage(item: item),
+                                    pageBuilder: (
+                                      BuildContext context,
+                                      Animation<double> animation,
+                                      Animation<double> secondaryAnimation,
+                                    ) => DetailPage(item: item),
                                     transitionDuration: Duration.zero,
                                     reverseTransitionDuration: Duration.zero,
-                                    transitionsBuilder:
-                                        (
-                                          BuildContext context,
-                                          Animation<double> animation,
-                                          Animation<double> secondaryAnimation,
-                                          Widget child,
-                                        ) => child,
+                                    transitionsBuilder: (
+                                      BuildContext context,
+                                      Animation<double> animation,
+                                      Animation<double> secondaryAnimation,
+                                      Widget child,
+                                    ) => child,
                                   ),
                                 );
                               },
@@ -425,6 +425,16 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         },
+        onChatTap: () {
+          Navigator.of(context).push(
+            PageRouteBuilder<void>(
+              pageBuilder: (ctx, anim, secAnim) => const ChatListScreen(),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              transitionsBuilder: (ctx, anim, secAnim, child) => child,
+            ),
+          );
+        },
         onAddTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
@@ -442,534 +452,6 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-// -- FILTER BUTTON ------------------------------------------------------------
-
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({
-    required this.label,
-    required this.active,
-    required this.onTap,
-    this.disabled = false,
-  });
-
-  final String label;
-  final bool active;
-  final bool disabled;
-  final VoidCallback onTap;
-
-  static const Color _teal = Color(0xFF6F9476);
-  static const Color _fill = Color(0xFFE3EEE9);
-  static const Color _dark = Color(0xFF2F3E36);
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: OutlinedButton(
-        onPressed: disabled ? null : onTap,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: active ? _teal : _fill,
-          side: BorderSide(
-            color: disabled ? Colors.grey.shade400 : _teal,
-            width: 1,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          disabledBackgroundColor: Colors.grey.shade200,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: disabled
-                    ? Colors.grey.shade500
-                    : active
-                    ? Colors.white
-                    : _dark,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 18,
-              color: disabled
-                  ? Colors.grey.shade500
-                  : active
-                  ? Colors.white
-                  : _dark,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// -- OPTION BOTTOM SHEET ------------------------------------------------------
-
-class _OptionSheet extends StatelessWidget {
-  const _OptionSheet({
-    required this.title,
-    required this.options,
-    required this.selected,
-    required this.onSelect,
-    this.useChips = false,
-  });
-
-  final String title;
-  final List<String> options;
-  final String? selected;
-  final void Function(String?) onSelect;
-  final bool useChips;
-
-  void _pick(BuildContext context, String? value) {
-    onSelect(value);
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const Divider(height: 1),
-          if (options.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('Geen opties beschikbaar.'),
-            )
-          else if (useChips)
-            _ChipBody(
-              options: options,
-              selected: selected,
-              onPick: (String? v) => _pick(context, v),
-            )
-          else
-            _ListBody(
-              options: options,
-              selected: selected,
-              onPick: (String? v) => _pick(context, v),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// Chip/pill layout (categories)
-class _ChipBody extends StatelessWidget {
-  const _ChipBody({
-    required this.options,
-    required this.selected,
-    required this.onPick,
-  });
-
-  final List<String> options;
-  final String? selected;
-  final void Function(String?) onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Flexible(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: <Widget>[
-            if (selected != null)
-              _Chip(
-                label: 'Alle',
-                isActive: false,
-                isClear: true,
-                onTap: () => onPick(null),
-              ),
-            ...options.map(
-              (String opt) => _Chip(
-                label: opt,
-                isActive: opt == selected,
-                isClear: false,
-                onTap: () => onPick(opt),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.isActive,
-    required this.isClear,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isActive;
-  final bool isClear;
-  final VoidCallback onTap;
-
-  static const Color _teal = Color(0xFF6F9476);
-  static const Color _dark = Color(0xFF2F3E36);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? _teal : const Color(0xFFE3EEE9),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? _teal : const Color(0xFFB5CFC0)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (isClear) ...<Widget>[
-              const Icon(Icons.close, size: 13, color: _dark),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isActive ? Colors.white : _dark,
-              ),
-            ),
-            if (isActive) ...<Widget>[
-              const SizedBox(width: 4),
-              const Icon(Icons.check, size: 13, color: Colors.white),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Single-column list layout (type, city, etc.)
-class _ListBody extends StatelessWidget {
-  const _ListBody({
-    required this.options,
-    required this.selected,
-    required this.onPick,
-  });
-
-  final List<String> options;
-  final String? selected;
-  final void Function(String?) onPick;
-
-  static const Color _teal = Color(0xFF6F9476);
-
-  @override
-  Widget build(BuildContext context) {
-    return Flexible(
-      child: ListView(
-        shrinkWrap: true,
-        children: <Widget>[
-          if (selected != null)
-            ListTile(
-              leading: const Icon(Icons.clear, size: 20),
-              title: const Text('Alle'),
-              onTap: () => onPick(null),
-            ),
-          ...options.map(
-            (String opt) => ListTile(
-              title: Text(opt),
-              trailing: selected == opt
-                  ? const Icon(Icons.check, color: _teal)
-                  : null,
-              onTap: () => onPick(opt),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// -- DISTANCE SLIDER SHEET ----------------------------------------------------
-
-class _DistanceSheet extends StatefulWidget {
-  const _DistanceSheet({required this.current, required this.onSelect});
-
-  final double? current;
-  final void Function(double?) onSelect;
-
-  @override
-  State<_DistanceSheet> createState() => _DistanceSheetState();
-}
-
-class _DistanceSheetState extends State<_DistanceSheet> {
-  static const double _maxKm = 250;
-  late double _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.current ?? _maxKm;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text(
-              'Max afstand',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                const Text('0 km'),
-                Text(
-                  '${_value.toStringAsFixed(0)} km',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: Color(0xFF6F9476),
-                  ),
-                ),
-                const Text('250 km'),
-              ],
-            ),
-            Slider(
-              value: _value,
-              min: 1,
-              max: _maxKm,
-              divisions: 249,
-              activeColor: const Color(0xFF6F9476),
-              onChanged: (double v) => setState(() => _value = v),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      widget.onSelect(null);
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF6F9476)),
-                    ),
-                    child: const Text(
-                      'Reset',
-                      style: TextStyle(color: Color(0xFF6F9476)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      widget.onSelect(_value < _maxKm ? _value : null);
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6F9476),
-                    ),
-                    child: const Text(
-                      'Toepassen',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// -- GENERIC SLIDER SHEET (price etc.) ----------------------------------------
-
-class _SliderSheet extends StatefulWidget {
-  const _SliderSheet({
-    required this.title,
-    required this.unit,
-    required this.unitBefore,
-    required this.maxAvailable,
-    required this.current,
-    required this.onSelect,
-  });
-
-  final String title;
-  final String unit;
-  final bool unitBefore;
-  final double maxAvailable;
-  final double? current;
-  final void Function(double?) onSelect;
-
-  @override
-  State<_SliderSheet> createState() => _SliderSheetState();
-}
-
-class _SliderSheetState extends State<_SliderSheet> {
-  late double _value;
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.current ?? widget.maxAvailable;
-  }
-
-  String _fmt(double v) {
-    final String num = v.toStringAsFixed(0);
-    return widget.unitBefore ? '${widget.unit}$num' : '$num ${widget.unit}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final int divisions = widget.maxAvailable > 0
-        ? widget.maxAvailable.clamp(10, 100).toInt()
-        : 10;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Text(_fmt(0)),
-                Text(
-                  _fmt(_value),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: Color(0xFF6F9476),
-                  ),
-                ),
-                Text(_fmt(widget.maxAvailable)),
-              ],
-            ),
-            Slider(
-              value: _value,
-              min: 0,
-              max: widget.maxAvailable,
-              divisions: divisions,
-              activeColor: const Color(0xFF6F9476),
-              onChanged: (double v) => setState(() => _value = v),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      widget.onSelect(null);
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF6F9476)),
-                    ),
-                    child: const Text(
-                      'Reset',
-                      style: TextStyle(color: Color(0xFF6F9476)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      widget.onSelect(
-                        _value < widget.maxAvailable ? _value : null,
-                      );
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6F9476),
-                    ),
-                    child: const Text(
-                      'Toepassen',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// -- HEADER ACTION ICON -------------------------------------------------------
-
-class _HeaderActionIcon extends StatelessWidget {
-  const _HeaderActionIcon({
-    this.assetPath,
-    this.iconOverride,
-    required this.onTap,
-  });
-
-  final String? assetPath;
-  final IconData? iconOverride;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SizedBox(
-        width: 36,
-        height: 36,
-        child: Center(
-          child: Image.asset(
-            assetPath ?? '',
-            width: 24,
-            height: 24,
-            color: Colors.white,
-            fit: BoxFit.contain,
-            errorBuilder:
-                (BuildContext context, Object error, StackTrace? stackTrace) =>
-                    const Icon(Icons.map, color: Colors.white),
-          ),
-        ),
       ),
     );
   }
