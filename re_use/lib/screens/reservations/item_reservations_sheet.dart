@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:re_use/services/reservation_service.dart';
 import 'package:re_use/types/item.dart';
 import 'package:re_use/types/reservation.dart';
+import 'package:re_use/services/item_service.dart';
 
 class ItemReservationsSheet extends StatelessWidget {
   const ItemReservationsSheet({super.key, required this.item});
@@ -52,9 +53,51 @@ class ItemReservationsSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(
-                      'Verzoeken voor',
-                      style: TextStyle(fontSize: 13, color: _muted),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Verzoeken voor',
+                          style: TextStyle(fontSize: 13, color: _muted),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                          tooltip: 'Advertentie verwijderen',
+                          onPressed: () async {
+                            final bool? confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Advertentie verwijderen'),
+                                content: const Text(
+                                  'Weet je zeker dat je deze advertentie wilt verwijderen?',
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Annuleren'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text(
+                                      'Verwijderen',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true && context.mounted) {
+                              await ItemService().deleteItem(item.id);
+                              if (context.mounted) Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                      ],
                     ),
                     Text(
                       item.title,

@@ -51,6 +51,10 @@ class ItemService {
     await docRef.set(itemWithId.toMap());
   }
 
+  Future<void> deleteItem(String id) async {
+    await _itemsCollection.doc(id).delete();
+  }
+
   Future<void> seedItemsIfEmpty() async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _itemsCollection
         .get();
