@@ -2,28 +2,32 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:re_use/screens/createpage/create_listing_widgets.dart';
 import 'package:re_use/services/auth_service.dart';
 import 'package:re_use/services/item_service.dart';
+import 'package:re_use/services/user_service.dart';
 import 'package:re_use/types/item.dart';
+
+enum _LocationSource { current, profile }
 
 const Color _teal = Color(0xFF6F9476);
 const Color _bg = Color(0xFFF3FAF7);
 
 const List<String> _categories = <String>[
-  'Crafts',
-  'Electronics',
-  'Garden',
-  'Kitchen',
-  'Music',
-  'Outdoor',
-  'Sports',
+  'Elektronica',
+  'Gereedschap',
+  'Handwerk',
+  'Keuken',
+  'Muziek',
+  'Buiten',
+  'Sport',
   'Tech',
-  'Tools',
   'Transport',
-  'Other',
+  'Tuin',
+  'Overige',
 ];
 
 const List<String> _countries = <String>['België', 'Nederland'];
@@ -56,6 +60,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String _selectedCategory = _categories.first;
   String _selectedCountry = _countries.first;
   bool _isSubmitting = false;
+  _LocationSource? _locationSource;
+  bool _isFetchingLocation = false;
 
   @override
   void dispose() {
@@ -66,16 +72,27 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     super.dispose();
   }
 
-  Future<({double? lat, double? lng})> _geocode(String city, String country) async {
+  Future<({double? lat, double? lng})> _geocode(
+    String city,
+    String country,
+  ) async {
     try {
       final Uri url = Uri.https(
         'nominatim.openstreetmap.org',
         '/search',
-        <String, String>{'city': city, 'country': country, 'format': 'json', 'limit': '1'},
+        <String, String>{
+          'city': city,
+          'country': country,
+          'format': 'json',
+          'limit': '1',
+        },
       );
       final http.Response response = await http.get(
         url,
-        headers: <String, String>{'User-Agent': 're-use-app/1.0', 'Accept': 'application/json'},
+        headers: <String, String>{
+          'User-Agent': 're-use-app/1.0',
+          'Accept': 'application/json',
+        },
       );
       if (response.statusCode != 200) return (lat: null, lng: null);
       final List<dynamic> results = jsonDecode(response.body) as List<dynamic>;
@@ -87,6 +104,158 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       );
     } catch (_) {
       return (lat: null, lng: null);
+    }
+  }
+
+  Future<({String city, String country})?> _reverseGeocode(
+    double lat,
+    double lng,
+  ) async {
+    try {
+      final Uri uri = Uri.https('nominatim.openstreetmap.org', '/reverse', {
+        'lat': lat.toString(),
+        'lon': lng.toString(),
+        'format': 'json',
+      });
+      final http.Response response = await http.get(
+        uri,
+        headers: {'User-Agent': 're-use-app/1.0', 'Accept': 'application/json'},
+      );
+      if (response.statusCode != 200) return null;
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
+      final Map<String, dynamic>? addr =
+          data['address'] as Map<String, dynamic>?;
+      if (addr == null) return null;
+      final String city =
+          (addr['city'] ??
+                  addr['town'] ??
+                  addr['village'] ??
+                  addr['municipality'] ??
+                  '')
+              as String;
+      final String? code = (addr['country_code'] as String?)?.toUpperCase();
+      final String? country = code == 'BE'
+          ? 'België'
+          : code == 'NL'
+          ? 'Nederland'
+          : null;
+      if (city.isEmpty || country == null) return null;
+      return (city: city, country: country);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<({String city, String country})?> _geocodeAddress(
+    String address,
+  ) async {
+    try {
+      final Uri uri = Uri.https('nominatim.openstreetmap.org', '/search', {
+        'q': address,
+        'format': 'json',
+        'limit': '1',
+        'addressdetails': '1',
+      });
+      final http.Response response = await http.get(
+        uri,
+        headers: {'User-Agent': 're-use-app/1.0', 'Accept': 'application/json'},
+      );
+      if (response.statusCode != 200) return null;
+      final List<dynamic> results = jsonDecode(response.body) as List<dynamic>;
+      if (results.isEmpty) return null;
+      final Map<String, dynamic>? addr =
+          (results.first as Map<String, dynamic>)['address']
+              as Map<String, dynamic>?;
+      if (addr == null) return null;
+      final String city =
+          (addr['city'] ??
+                  addr['town'] ??
+                  addr['village'] ??
+                  addr['municipality'] ??
+                  '')
+              as String;
+      final String? code = (addr['country_code'] as String?)?.toUpperCase();
+      final String? country = code == 'BE'
+          ? 'België'
+          : code == 'NL'
+          ? 'Nederland'
+          : null;
+      if (city.isEmpty || country == null) return null;
+      return (city: city, country: country);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _applyLocationSource(_LocationSource source) async {
+    if (_isFetchingLocation) return;
+    setState(() {
+      _locationSource = source;
+      _isFetchingLocation = true;
+    });
+    try {
+      if (source == _LocationSource.current) {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Locatiepermissie geweigerd.')),
+            );
+          }
+          return;
+        }
+        final Position pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
+        );
+        final result = await _reverseGeocode(pos.latitude, pos.longitude);
+        if (result != null && mounted) {
+          setState(() {
+            _cityController.text = result.city;
+            _selectedCountry = result.country;
+          });
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Stad niet herkend voor huidige locatie.'),
+            ),
+          );
+        }
+      } else {
+        final user = _authService.currentUser;
+        if (user != null) {
+          final Map<String, dynamic>? profile = await UserService()
+              .getUserProfile(user.uid);
+          final String? address = profile?['address'] as String?;
+          if (address != null && address.isNotEmpty) {
+            final result = await _geocodeAddress(address);
+            if (result != null && mounted) {
+              setState(() {
+                _cityController.text = result.city;
+                _selectedCountry = result.country;
+              });
+            } else if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profieladres niet herkend.')),
+              );
+            }
+          } else if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Geen adres gevonden in je profiel.'),
+              ),
+            );
+          }
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
     }
   }
 
@@ -102,7 +271,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     final user = _authService.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Je moet ingelogd zijn om een item toe te voegen.')),
+        const SnackBar(
+          content: Text('Je moet ingelogd zijn om een item toe te voegen.'),
+        ),
       );
       return;
     }
@@ -143,7 +314,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final String message = lat != null
           ? 'Item gepubliceerd en zichtbaar op de kaart!'
           : 'Item gepubliceerd, maar stad niet gevonden op de kaart. Controleer de stadsnaam.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
@@ -203,6 +376,59 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     });
   }
 
+  Widget _buildLocationChip(
+    _LocationSource source,
+    IconData icon,
+    String label,
+  ) {
+    final bool selected = _locationSource == source;
+    final bool loading = _isFetchingLocation && _locationSource == source;
+    return Expanded(
+      child: GestureDetector(
+        onTap: _isFetchingLocation ? null : () => _applyLocationSource(source),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          decoration: BoxDecoration(
+            color: selected ? _teal : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? _teal : const Color(0xFFD0E4DB),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              if (loading)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: selected ? Colors.white : _teal,
+                  ),
+                )
+              else
+                Icon(icon, size: 15, color: selected ? Colors.white : _teal),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : _teal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,22 +483,20 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               const SizedBox(height: 24),
               CreateSectionLabel('Locatie'),
               const SizedBox(height: 10),
-              CreateDropdownField<String>(
-                label: 'Land',
-                value: _selectedCountry,
-                items: _countries,
-                itemLabel: (String s) => s,
-                onChanged: (String? v) {
-                  if (v != null) setState(() => _selectedCountry = v);
-                },
-              ),
-              const SizedBox(height: 12),
-              CreateField(
-                controller: _cityController,
-                label: 'Stad',
-                hint: 'bijv. Antwerpen',
-                validator: (String? v) =>
-                    v == null || v.trim().isEmpty ? 'Stad is verplicht' : null,
+              Row(
+                children: <Widget>[
+                  _buildLocationChip(
+                    _LocationSource.current,
+                    Icons.my_location_rounded,
+                    'Huidige locatie',
+                  ),
+                  const SizedBox(width: 10),
+                  _buildLocationChip(
+                    _LocationSource.profile,
+                    Icons.person_outline,
+                    'Mijn profiel',
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               CreateSectionLabel('Prijs & type'),
@@ -284,7 +508,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       controller: _priceController,
                       label: 'Prijs (€)',
                       hint: '0',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       validator: (String? v) {
                         if (v == null || v.trim().isEmpty) return 'Verplicht';
                         if (double.tryParse(v.trim()) == null ||
