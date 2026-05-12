@@ -210,6 +210,7 @@ class _HomePageState extends State<HomePage> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
         toolbarHeight: 76,
         titleSpacing: 20,
         title: Row(
@@ -379,19 +380,21 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   PageRouteBuilder(
-                                    pageBuilder: (
-                                      BuildContext context,
-                                      Animation<double> animation,
-                                      Animation<double> secondaryAnimation,
-                                    ) => DetailPage(item: item),
+                                    pageBuilder:
+                                        (
+                                          BuildContext context,
+                                          Animation<double> animation,
+                                          Animation<double> secondaryAnimation,
+                                        ) => DetailPage(item: item),
                                     transitionDuration: Duration.zero,
                                     reverseTransitionDuration: Duration.zero,
-                                    transitionsBuilder: (
-                                      BuildContext context,
-                                      Animation<double> animation,
-                                      Animation<double> secondaryAnimation,
-                                      Widget child,
-                                    ) => child,
+                                    transitionsBuilder:
+                                        (
+                                          BuildContext context,
+                                          Animation<double> animation,
+                                          Animation<double> secondaryAnimation,
+                                          Widget child,
+                                        ) => child,
                                   ),
                                 );
                               },
